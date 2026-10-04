@@ -1,0 +1,75 @@
+# Единственный источник гиперпараметров проекта (п.1.8 Положения).
+# Рабочие точки — из research/20_BUILD_FOUNDATION.md (волны 1–2, 04.10.2026).
+# Магических чисел в коде нет: всё читается отсюда через ecotypes.config.
+
+seed: 42
+
+data:
+  start: "2023-01"
+  end: "2024-12"
+  min_months: 24                 # полная история → ядро 2016 МО
+  categories: [Продовольствие, Здоровье, Маркетплейсы, Общественное питание, Транспорт]
+  total_category: "Все категории"
+
+panel:                           # research/21
+  clr_clip: 1.0e-4               # клип долей перед CLR (страховка; нулей в данных нет)
+  seasonality: month_of_year_log # per-МО month-of-year индексы в логах; STL запрещён (T=24)
+  market_residual: true          # кросс-секционный демеанинг по месяцу — ОБЯЗАТЕЛЬНО (сырые приросты вырождены)
+
+graph:                           # research/23
+  similarity: m2_residual_corr   # m1_deseason | m2_residual_corr | m3_multichannel | m4_lag | m5_aitchison | m6_dtw_level | m7_dtw_clr | m8_gravity | m9_blend | m10_snf | m11_learned
+  knn_k: 10
+  knn_sym: union                 # mutual даёт 102 изолята — запрещён
+  fdr_q: 0.05                    # BH по всем 2.03M пар; эффективный |r|≥0.577
+  safety_top: 3                  # топ-3 safety net без FDR-условия (возвращает 17 узлов)
+  geo:
+    enabled: true
+    knn_k: 10
+    lambda_km: 150               # exp(−d/λ); чувствительность {100,150,250} в абляции
+  dtw:
+    window: 3                    # Сакое–Тиба; лаг >3 мес при T=24 физически не обоснован
+
+cluster:                         # research/25/26/27
+  leiden:
+    partition: RBConfiguration   # CPM — строка сравнения
+    gamma: 1.0
+    gammas_sweep: [0.25, 0.5, 1.0, 1.5, 2.0]
+    seeds_per_snapshot: 25       # одиночный прогон недопустим: seed-разброс ARI 0.44–0.73
+  kmeans:
+    ks: [4, 6, 8, 10, 12]
+    n_init: 10                   # sklearn 1.9: n_init="auto" молча = 1 — ловушка
+  eva:
+    alpha: 0.5
+  kefrin:
+    rho: 0.5
+    xi: 0.5
+    k: 6                         # своя реализация по Shalileh & Mirkin, Entropy 2022
+
+dynamics:                        # research/29
+  tau_inherit: 0.3               # Hungarian (1−Jaccard), порог наследования типа
+  metric: jaccard
+  smoothing_window: 3            # моргание 10.8% → публичные заявления только на smoothed
+
+icvi:                            # research/32 (формулы сверены с Pattern до 1e-16)
+  panel: [SW, CH_over_N, S_Dbw, AVI, AVU, MQ]
+  mq_variant: turbomq            # ловушка Mancoridis [−1,1] vs TurboMQ [0,k] — фиксируем явно
+  sdbw_alg_noise: bind
+  random_z_runs: 100             # перестановки меток для baseline-нормализации
+
+synthetic:                       # research/28 (калибровка по реальным данным 04.10.2026)
+  replicas: 15
+  grid_K: [4, 6, 8]
+  grid_drift: [0.0, 0.05, 0.10]
+  alpha_btw: 80
+  alpha_within: 750
+  alpha_proto: 2.0
+  mu_edge: 0.25
+  lfr_mu: [0.3, 0.4]             # mu≤0.25 нестабилен — не предлагать
+
+interpret:                       # research/33
+  surrogate_max_depth: 4
+  mirkin_top_features: 5
+  shap_samples: 2016
+
+site:
+  max_mb: 3

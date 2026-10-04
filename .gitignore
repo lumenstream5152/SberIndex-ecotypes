@@ -1,0 +1,13 @@
+__pycache__/
+*.pyc
+.venv/
+.uv/
+data/raw/
+data/interim/
+data/processed/
+outputs/*
+!outputs/main/
+outputs/main/*
+.DS_Store
+site/*.html
+!site/index.html

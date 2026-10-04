@@ -1,0 +1,42 @@
+# Машиночитаемый дубль PREREG.md. CI-тест сверяет, что композиты в коде
+# считаются по этим числам, а не по копии в коде. Зафиксировано тегом prereg-v1
+# ДО первого скорингового прогона. Отклонения — только через PREREG_DEVIATIONS.md.
+
+similarity:                        # research/24: выбор меры сходства / правила рёбер
+  candidates: [M1, M2, M3, M4, M5, M6, M7, M8, M9, M10, M11]
+  anti_examples: [X1, X2, X3]      # уровни / сырые приросты / сырой косинус — в таблицу, не в скоринг
+  gate: {bootstrap_jaccard_min: 0.25, bootstraps: 30, stratify: calendar_month}
+  knn_k: 10
+  seeds: 30
+  composite_weights: {Q: 0.30, S: 0.25, T: 0.20, R: 0.15, H: 0.10}
+  margin_rule_se: 1.0              # победа требует отрыва ≥1 бутстреп-SE разности композитов
+  tiebreak_order: [M8, M5, M2, M1, M3, M4, M6, M7, M9, M10, M11]  # оккам: простое < динамическое < фьюжн < обучаемое
+  m9_alpha_grid: [0.0, 0.25, 0.5, 0.75, 1.0]   # α выбирается по ноге T, НЕ по композиту
+  dirichlet_sensitivity: {concentration: 20.0, draws: 2000}
+  lomo_rule: "если победитель меняется в >1 из 5 LOMO — объявляем фотофиниш, выбор по tiebreak_order"
+  t_leg: {primary: split_half, secondary: odd_even}
+  cross_evaluation:                # анти-циркулярность
+    leiden_judged_by: [SW, CH_over_N, S_Dbw]       # атрибутивные ICVI
+    kmeans_judged_by: [MQ, internal_edge_ratio]    # сетевые
+
+method:                            # research/28: выбор метода кластеризации
+  composite_weights: {nmi_synth: 0.30, stability: 0.20, icvi: 0.30, interpretability: 0.15, timing_inv: 0.05}
+  icvi_subweights: {SW: 0.12, CH_over_N: 0.06, neg_S_Dbw: 0.06, MQ: 0.06}  # сумма 0.30
+  avi_avu_in_composite: false      # AVI/AVU — только отчёт, в композит не входят (риск самоподтверждения)
+  drift_metrics_in_composite: false # per-snapshot NMI и F1 смены типа — отдельный блок, не ранжирующий
+  synthetic:
+    replicas: 15
+    grid_A: {K: [4, 6, 8], drift: [0.0, 0.05, 0.10], alpha_btw: 80, mu_edge: 0.25}
+    grid_B: {K: 6, drift: 0.05, alpha_btw: [40, 160]}
+    grid_C_lfr_mu: [0.3, 0.4]
+  pairwise: {test: wilcoxon, correction: BH, replicas_paired: true}
+
+fixed_decisions:                   # research/24/25/28/32 §C — зафиксировано до прогонов
+  gamma_rule: "плато k(γ)±1 + 30-seed ARI ≥ 0.9; ICVI — только внутри плато"
+  tau_inherit: 0.3
+  mq_variant: turbomq
+  sdbw_alg_noise: bind
+  kmeans_n_init: 10
+  leiden_seeds_per_snapshot: 25
+  circular_pairs: ["Leiden↔MQ", "KMeans↔SW", "KMeans↔CH", "M8↔гео-согласие"]
+  smoothing_window: 3

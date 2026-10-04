@@ -1,0 +1,13 @@
+# Smoke-режим: оверрайд-дельки поверх default.yaml (слияние). Цель: <5 минут.
+data:
+  sample_n: 200                  # подвыборка МО вместо 2016
+cluster:
+  leiden:
+    gammas_sweep: [1.0]
+    seeds_per_snapshot: 4
+  kmeans:
+    ks: [6]
+synthetic:
+  replicas: 3
+icvi:
+  random_z_runs: 10
