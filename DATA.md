@@ -39,3 +39,8 @@ License: CC BY-SA 4.0.
 
 Росстат, БД показателей муниципальных образований — через каталог «Если быть
 точным» (tochno-st): https://storage.yandexcloud.net/tochno-st-catalog/Rosstat/ — CC BY 4.0.
+
+data/external/ (в git не хранится, копируется из внешнего кэша; research/34):
+rosstat_pmo_population_2022_2024_compact.csv, rosstat_pmo_employment_okved_annual.csv,
+rosstat_pmo_wages_total_annual.csv — Росстат БД ПМО, выгрузка tochno.st v20250918,
+скачано 04.10.2026, CC BY 4.0 (индикаторы Y48112027, Y48423005, Y48423007 за 2022–2024).

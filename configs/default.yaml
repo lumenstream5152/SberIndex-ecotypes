@@ -52,7 +52,7 @@ dynamics:                        # research/29
 
 icvi:                            # research/32 (формулы сверены с Pattern до 1e-16)
   panel: [SW, CH_over_N, S_Dbw, AVI, AVU, MQ]
-  mq_variant: turbomq            # ловушка Mancoridis [−1,1] vs TurboMQ [0,k] — фиксируем явно
+  mq_variant: mancoridis         # первичный Mancoridis 1998; TurboMQ — абляция (механически растёт с K)
   sdbw_alg_noise: bind
   random_z_runs: 100             # перестановки меток для baseline-нормализации
 

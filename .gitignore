@@ -3,6 +3,7 @@ __pycache__/
 .venv/
 .uv/
 data/raw/
+data/external/
 data/interim/
 data/processed/
 outputs/*

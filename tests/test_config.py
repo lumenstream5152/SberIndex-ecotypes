@@ -10,7 +10,7 @@ def test_default_config_validates():
     cfg = load_config("configs/default.yaml")
     assert cfg.graph.knn_k == 10
     assert cfg.cluster.leiden.partition == "RBConfiguration"
-    assert cfg.icvi.mq_variant == "turbomq"
+    assert cfg.icvi.mq_variant == "mancoridis"
 
 
 def test_smoke_merge():
