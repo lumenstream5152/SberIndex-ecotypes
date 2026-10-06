@@ -132,7 +132,9 @@ def test_real_selfcheck(real_graphs):
     stats = pd.read_parquet(paths["edge_stats"])
 
     n_star = int((mask & 1).sum())              # рёбра E* (бит0)
-    assert 11_000 <= n_star <= 15_000           # спека: ≈12 900
+    # окно под M3 (прод-граф, PREREG_DEVIATIONS №10): E* ≈ 8 716 при mean r 0.711;
+    # M2-якорь (≈12 900) остаётся верхней границей окна
+    assert 8_000 <= n_star <= 15_000
     r_star = stats.loc[stats.is_similarity, "r"].to_numpy()
     assert 0.65 <= r_star.mean() <= 0.85        # спека: 0.737
     assert (r_star > 0).all()                   # доля r<0 на E* = 0

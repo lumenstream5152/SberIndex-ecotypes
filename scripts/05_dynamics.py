@@ -33,7 +33,9 @@ def main() -> None:
     ctx.log(f"типов всего={m['k_total_types']}, переходы "
             f"{m['mover_share_raw']:.3f}→{m['mover_share_smoothed']:.3f}, "
             f"ARI cross mean={m['ari_cross_mean']:.3f} vs perturb "
-            f"{m['ari_perturb_med_mean']:.3f}, flagged={m['n_flagged']}/{m['n_pairs']}; "
+            f"{m['ari_perturb_med_mean']:.3f}, flagged={m['n_flagged']}/{m['n_pairs']}, "
+            f"события {m['n_events_raw']}raw→{m['n_events_smoothed']}smoothed"
+            f"→{m['n_events_admitted']}admitted; "
             f"{time.time() - t0:.1f}s → {root / 'dynamics'}")
     ctx.close()
 

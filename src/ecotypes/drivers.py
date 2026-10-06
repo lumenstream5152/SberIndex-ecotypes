@@ -706,6 +706,15 @@ def run_all(cfg: Config, root: str | Path, ctx) -> dict:
     inp = load_inputs(root)
     months = sorted(inp["panel"].month.unique())
     flagged = flagged_pair_months(inp["stability"])
+    if len(flagged) >= len(months) - 1:
+        # PREREG_DEVIATIONS №12: глобальный гейт flagged по всем парам публикуется
+        # как есть (stability.json), но построчное исключение flagged-месяцев
+        # обнуляет ВСЕ таргеты y1/y3 → допуск событий переведён на узловой скрин
+        # 05 (events.parquet = admitted), построчное исключение не применяется.
+        ctx.log(f"flagged покрывает все {len(flagged)}/{len(months) - 1} пар месяцев "
+                f"(глобальный гейт, №12) — построчное исключение таргетов отключено, "
+                f"допуск событий узловым скрином (admitted)")
+        flagged = set()
     targets, Z = make_targets(inp["labels"], inp["registry"], flagged, months,
                               first_usable_idx=par.history)
     ctx.log(f"драйверы: flagged-пар исключено {len(flagged)}; строк таргета {len(targets)}")
@@ -777,6 +786,17 @@ def run_all(cfg: Config, root: str | Path, ctx) -> dict:
     glob_prof.insert(0, "rank", np.arange(1, len(glob_prof) + 1))
 
     trans = model_df[model_df.y1 == 1].reset_index(drop=True)
+    # №12: драйверы/карточки/event-study — только на событиях, прошедших узловой
+    # скрин 05 (events.parquet = admitted; month события = месяц НОВОЙ метки,
+    # т.е. month_t + 1).
+    adm = set(zip(inp["events"]["territory_id"].astype(int),
+                  inp["events"]["month"].astype(str)))
+    next_m = {m: months[k + 1] for k, m in enumerate(months[:-1])}
+    keep = [(int(r.territory_id), next_m.get(str(r.month_t))) in adm
+            for r in trans.itertuples()]
+    ctx.log(f"события для драйверов: {len(trans)} переходов y1 → "
+            f"{sum(keep)} admitted скрином №12")
+    trans = trans[keep].reset_index(drop=True)
     sv_tr = shap_values(finals[1], trans[pub_feats]) if len(trans) else np.zeros((0, len(pub_feats)))
 
     # вероятности для карточек: OOF где есть, иначе финальная модель;

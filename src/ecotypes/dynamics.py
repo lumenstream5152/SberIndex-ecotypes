@@ -6,8 +6,10 @@
 дублируем) → согласование меток с t−1 Hungarian'ом на (1 − Jaccard),
 τ = cfg.dynamics.tau_inherit → реестр типов (birth/death/merge/split) →
 anti-flicker smoothing окном-3 (публичные переходы только на smoothed, §10.4) →
-стабильность: ARI(t,t+1) vs seed-null vs 5%-пертурбация рёбер (§5; flagged-пары
-в событийный слой не допускаются).
+стабильность: ARI(t,t+1) vs seed-null vs 5%-пертурбация рёбер (§5; глобальный
+гейт публикуется как есть — PREREG_DEVIATIONS №12), допуск переходов в
+событийный слой — узловым скрином screen_events (no_flicker + seed_agreement +
+материальный CLR-сдвиг).
 
 Multislice сознательно отвергнут (спека §4): сила временной связи у нас
 ИЗМЕРЯЕТСЯ (тройка ARI), а не предполагается приором.
@@ -38,7 +40,7 @@ __all__ = [
     "flicker_share", "transition_share", "perturb_graph", "stability_report",
     "transitions_monthly", "transitions_quarterly", "p_bar",
     "stationary", "goodman_order_test", "spatial_markov", "events_table",
-    "run_dynamics",
+    "screen_events", "run_dynamics",
 ]
 
 # Дефолты спеки 29 §10, которых нет в strict-конфиге (DynamicsCfg — только
@@ -578,8 +580,9 @@ def events_table(z_smooth: np.ndarray, nidx: pd.DataFrame, months: list[str],
     """МО-переходчики на smoothed-метках (§6.5): month (месяц новой метки),
     territory_id, type_from, type_to, top3_delta_clr — топ-3 CLR-компонента по
     |Δ| за 3 месяца до перехода (clr[t] − clr[t−3]; окно слева обрезано, для
-    перехода в первом месяце истории нет → None). Переходы flagged-пар
-    (стабильность ниже шума метода) НЕ допускаются (§5)."""
+    перехода в первом месяце истории нет → None). flagged_pairs — наследие
+    глобального гейта §5; с PREREG_DEVIATIONS №12 допуск событий делает
+    screen_events, сюда передаётся пустое множество (гейт публикуется как есть)."""
     flagged = set(flagged_pairs)
     X = None
     if panel is not None:
@@ -600,6 +603,88 @@ def events_table(z_smooth: np.ndarray, nidx: pd.DataFrame, months: list[str],
                          int(z_smooth[t, i]), int(z_smooth[t + 1, i]), top3))
     return pd.DataFrame(rows, columns=["month", "territory_id", "type_from",
                                        "type_to", "top3_delta_clr"])
+
+
+def screen_events(events: pd.DataFrame, labels: pd.DataFrame,
+                  panel: pd.DataFrame | None, cfg: Config) -> pd.DataFrame:
+    """Узловой скрин допуска переходов в событийный слой (PREREG_DEVIATIONS №12).
+
+    Глобальный гейт §5 (ARI(t,t+1) vs пертурб-нуль) на прод-данных flagged
+    23/23 и публикуется как есть (факт сверхинертной типологии); чтобы
+    событийный слой не исчез, событие (узел i, месяц t — переход t−1→t на
+    smoothed-метках) допускается, если одновременно:
+    (а) no_flicker: smoothed-метка в t+1 равна новой метке t (узел не «моргнул»
+        обратно и не прыгнул дальше); для последнего месяца форвард-проверка
+        неприменима — требуется только внутренняя устойчивость перехода (он по
+        построению на smoothed-метках), условие снимается;
+    (б) seed_agreement узла в t−1 и t ≥ cfg.dynamics.event_screen.seed_agreement_min
+        (колонка labels.parquet; пропуск месяца = отказ, консервативно);
+    (в) материальный сдвиг профиля: CLR-дистанция ‖clr[t] − clr[t−1]‖₂ ≥
+        квантиль cfg.dynamics.event_screen.displacement_quantile, посчитанный
+        по всем узел-месяцам (все смежные пары всех узлов; clr_* панели).
+
+    Возвращает копию events с колонками displacement (float; NaN без панели —
+    проверка (в) тогда неприменима и не блокирует), admitted (bool),
+    reject_reason (str через «;»; пусто у admitted). Функция чистая —
+    детерминирована по входам."""
+    es = cfg.dynamics.event_screen
+    out = events.copy().reset_index(drop=True)
+    if len(out) == 0:
+        out["displacement"] = pd.Series(dtype=np.float64)
+        out["admitted"] = pd.Series(dtype=bool)
+        out["reject_reason"] = pd.Series(dtype=str)
+        return out
+
+    months = sorted(labels["month"].astype(str).unique())
+    tids = np.sort(labels["territory_id"].unique())
+    T = len(months)
+    Zs = (labels.assign(month=labels["month"].astype(str))
+                .pivot(index="territory_id", columns="month", values="type_id_smooth")
+                .reindex(index=tids, columns=months).to_numpy())
+    Ag = (labels.assign(month=labels["month"].astype(str))
+                .pivot(index="territory_id", columns="month", values="seed_agreement")
+                .reindex(index=tids, columns=months).to_numpy(np.float64))
+    if panel is not None:
+        X = np.stack([panel.assign(month=panel["month"].astype(str))
+                           .pivot(index="territory_id", columns="month", values=c)
+                           .reindex(index=tids, columns=months)
+                           .to_numpy(np.float64)
+                      for c in CLR_COLS])                     # (6, n, T)
+        D = np.sqrt((np.diff(X, axis=2) ** 2).sum(axis=0))    # (n, T−1)
+        thr = float(np.nanquantile(D, es.displacement_quantile))
+    else:
+        D, thr = None, np.nan
+
+    midx = {m: k for k, m in enumerate(months)}
+    tpos = {int(t): p for p, t in enumerate(tids)}
+    t = out["month"].astype(str).map(midx).to_numpy()
+    i = out["territory_id"].map(tpos).to_numpy()
+    if np.isnan(t.astype(np.float64)).any() or np.isnan(i.astype(np.float64)).any():
+        raise ValueError("screen_events: событие ссылается на узел/месяц вне labels")
+    t, i = t.astype(np.int64), i.astype(np.int64)
+    if (t < 1).any():
+        raise ValueError("screen_events: событие в первом месяце истории — "
+                         "перехода t−1→t не существует")
+
+    seed_ok = ((Ag[i, t - 1] >= es.seed_agreement_min)
+               & (Ag[i, t] >= es.seed_agreement_min))
+    has_next = t + 1 < T
+    flicker_ok = (not es.no_flicker) | (~has_next) | (
+        Zs[i, np.minimum(t + 1, T - 1)] == Zs[i, t])
+    disp = D[i, t - 1] if D is not None else np.full(len(out), np.nan)
+    disp_ok = (D is None) | (disp >= thr)  # NaN >= thr → False (консервативно)
+    admitted = seed_ok & flicker_ok & disp_ok
+
+    reasons = []
+    for s_ok, f_ok, d_ok in zip(seed_ok, flicker_ok, disp_ok):
+        r = ([] if f_ok else ["no_flicker"]) + ([] if s_ok else ["seed_agreement"]) \
+            + ([] if d_ok else ["displacement"])
+        reasons.append(";".join(r))
+    out["displacement"] = disp
+    out["admitted"] = admitted
+    out["reject_reason"] = reasons
+    out.attrs["displacement_threshold"] = thr  # квантиль по ВСЕМ узел-месяцам
+    return out
 
 
 # ---------------------------------------------------------------- оркестратор
@@ -639,20 +724,23 @@ def run_dynamics(graphs_dir: str | Path, knn_path: str | Path,
     zm, registry = match_labels(Z, months, tau=cfg.dynamics.tau_inherit)
     zs = smooth_labels(zm, window=cfg.dynamics.smoothing_window)
     stab = stability_report(snaps, Z, seed_ari, z_single, cfg, months)
-    flagged = [t for t, p in enumerate(stab["pairs"]) if p["flagged"]]
     ids, Pbar = p_bar(zs)
     ids2, pi, M, regularized = stationary(Pbar, ids)
     order_p = goodman_order_test(zs)
     sm = spatial_markov(zs, pd.read_parquet(knn_path), nidx,
                         seed=stage_seed(cfg.seed, "dynamics"))
     panel = pd.read_parquet(panel_path) if panel_path is not None else None
-    ev = events_table(zs, nidx, months, flagged_pairs=flagged, panel=panel)
-
     labels = pd.concat([pd.DataFrame({
         "territory_id": nidx["territory_id"].to_numpy(), "month": m,
         "type_id_raw": Z[t], "type_id": zm[t], "type_id_smooth": zs[t],
         "seed_agreement": agree[t], "present": True})
         for t, m in enumerate(months)], ignore_index=True)
+    # №12: глобальный гейт (flagged) публикуется как есть, допуск событий —
+    # узловой скрин; events_all = все smoothed-переходы, без пары-исключений
+    ev = screen_events(events_table(zs, nidx, months, flagged_pairs=(),
+                                    panel=panel),
+                       labels, panel, cfg)
+    ev_adm = ev[ev["admitted"]].reset_index(drop=True)
     labels.to_parquet(out_dir / "labels.parquet", index=False)
     registry.to_parquet(out_dir / "type_registry.parquet", index=False)
     transitions_monthly(zs, months).to_csv(out_dir / "transitions_monthly.csv",
@@ -663,7 +751,10 @@ def run_dynamics(graphs_dir: str | Path, knn_path: str | Path,
                                              index=False)
     _write_json(out_dir / "stability.json", stab)
     _write_json(out_dir / "spatial_markov.json", sm)
-    ev.to_parquet(out_dir / "events.parquet", index=False)
+    ev.to_parquet(out_dir / "events_all.parquet", index=False)
+    ev_adm.to_parquet(out_dir / "events_admitted.parquet", index=False)
+    # контрактное имя downstream (07b и далее): события = прошедшие скрин (№12)
+    ev_adm.to_parquet(out_dir / "events.parquet", index=False)
     _write_json(out_dir / "stationary.json", {
         "pi": {str(int(t)): float(p) for t, p in zip(ids2, pi)},
         "mfpt": {str(int(a)): {str(int(b)): M[x, y] for y, b in enumerate(ids2)}
@@ -691,7 +782,19 @@ def run_dynamics(graphs_dir: str | Path, knn_path: str | Path,
         "ari_cross_mean": stab["summary"]["ari_cross_mean"],
         "ari_perturb_med_mean": stab["summary"]["ari_perturb_med_mean"],
         "n_flagged": stab["summary"]["n_flagged"], "n_pairs": len(stab["pairs"]),
-        "n_events": int(len(ev)),
+        "n_events": int(len(ev_adm)),          # публичный событийный слой (№12)
+        "n_events_raw": int((zm[1:] != zm[:-1]).sum()),
+        "n_events_smoothed": int(len(ev)),
+        "n_events_admitted": int(len(ev_adm)),
+        "event_screen": {
+            "seed_agreement_min": cfg.dynamics.event_screen.seed_agreement_min,
+            "displacement_quantile": cfg.dynamics.event_screen.displacement_quantile,
+            "no_flicker": cfg.dynamics.event_screen.no_flicker,
+            "displacement_threshold": (float(ev.attrs["displacement_threshold"])
+                                       if len(ev) and panel is not None else None),
+            "reject_reasons": ev.loc[~ev["admitted"], "reject_reason"]
+                              .value_counts().to_dict(),
+        },
         "order_test_p": order_p, "regularized_pi": regularized,
     }
     return {"metrics": metrics}

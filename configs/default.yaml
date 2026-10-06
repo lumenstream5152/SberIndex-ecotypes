@@ -17,7 +17,7 @@ panel:                           # research/21
   market_residual: true          # кросс-секционный демеанинг по месяцу — ОБЯЗАТЕЛЬНО (сырые приросты вырождены)
 
 graph:                           # research/23
-  similarity: m3_multichannel    # победитель предрегистрированного бенчмарка мер (PREREG_DEVIATIONS №10, run 20261006_150618); m2_residual_corr — строка сравнения
+  similarity: m2_residual_corr   # прод-граф = M2: M3 выиграл бенчмарк мер, но не проходит плато-гейт типологии (k=1) — PREREG_DEVIATIONS №10–11
   knn_k: 10
   knn_sym: union                 # mutual даёт 102 изолята — запрещён
   fdr_q: 0.05                    # BH по всем 2.03M пар; эффективный |r|≥0.577
@@ -49,6 +49,10 @@ dynamics:                        # research/29
   tau_inherit: 0.3               # Hungarian (1−Jaccard), порог наследования типа
   metric: jaccard
   smoothing_window: 3            # моргание 10.8% → публичные заявления только на smoothed
+  event_screen:                  # узловой скрин допуска переходов в событийный слой (PREREG_DEVIATIONS №12)
+    seed_agreement_min: 0.8      # согласие seed-консенсуса по узлу в обоих месяцах
+    displacement_quantile: 0.75  # CLR-дистанция профиля месяц-к-месяцу ≥ этого квантиля
+    no_flicker: true             # smoothed-метки t−1 и t+1 должны согласоваться
 
 icvi:                            # research/32 (формулы сверены с Pattern до 1e-16)
   panel: [SW, CH_over_N, S_Dbw, AVI, AVU, MQ]

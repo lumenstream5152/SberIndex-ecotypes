@@ -10,6 +10,7 @@ from pathlib import Path
 
 from ecotypes import laglead as ll
 from ecotypes.config import load_config
+from ecotypes.interpret import find_run
 from ecotypes.runctx import RunContext
 from ecotypes.seeds import set_all_seeds, stage_seed
 
@@ -20,9 +21,9 @@ def main() -> None:
     ap.add_argument("--overrides", default=None)
     ap.add_argument("--out", default="data/processed",
                     help="каталог панели; продукты пишутся в <out>/laglead/")
-    ap.add_argument("--labels",
-                    default="outputs/20261005_2129_default_fcd0587/labels.parquet",
-                    help="labels.parquet с leiden_consensus для согласия с типами")
+    ap.add_argument("--labels", default=None,
+                    help="labels.parquet с leiden_consensus для согласия с типами; "
+                         "по умолчанию — последний подходящий run 04 (find_run)")
     args = ap.parse_args()
 
     cfg = load_config(args.config, overrides=args.overrides)
@@ -34,7 +35,12 @@ def main() -> None:
 
     t0 = time.time()
     seed = stage_seed(cfg.seed, "07d_laglead")
-    edges, summary = ll.run_laglead(args.out, labels_path=args.labels,
+    labels = args.labels
+    if labels is None:
+        labels = str(find_run("outputs", "gamma_star", require="labels.parquet")
+                     / "labels.parquet")
+        ctx.log(f"labels ← {labels}")
+    edges, summary = ll.run_laglead(args.out, labels_path=labels,
                                     seed=seed, log=ctx.log)
     synth = ll.synthetic_verification(seed=seed ^ 0xBEEF)
     ctx.log(f"синтетика: recovery={synth['planted']['exact_recovery']:.2f}, "

@@ -78,10 +78,17 @@ class ClusterCfg(_Strict):
     kefrin: KefrinCfg
 
 
+class EventScreenCfg(_Strict):
+    seed_agreement_min: float
+    displacement_quantile: float
+    no_flicker: bool
+
+
 class DynamicsCfg(_Strict):
     tau_inherit: float
     metric: Literal["jaccard"]
     smoothing_window: int
+    event_screen: EventScreenCfg
 
 
 class IcviCfg(_Strict):

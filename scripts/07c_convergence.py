@@ -7,6 +7,7 @@ import pandas as pd
 from sklearn.metrics import adjusted_rand_score
 from ecotypes import logt as lt
 from ecotypes.config import load_config
+from ecotypes.interpret import find_run
 from ecotypes.runctx import RunContext
 from ecotypes.seeds import set_all_seeds
 
@@ -24,9 +25,13 @@ def main() -> None:
     ctx, t0 = RunContext(cfg, config_name=name, stage="07c_convergence", out_root=args.out), time.time()
     df = pd.read_parquet("data/processed/panel_monthly.parquet")
     series = {"mpfood": df.share_market / df.share_prod, "food": df.share_prod, "proch": df.share_proch}
-    lp = Path("outputs/20261005_2129_default_fcd0587/labels.parquet")  # leiden_consensus из 04
-    types = pd.read_parquet(lp, columns=["territory_id", "leiden_consensus"]) if lp.exists() else None
-    if types is None: ctx.log(f"WARNING: {lp} нет — кросс-таб и ARI скипнуты")
+    # leiden_consensus из последнего подходящего run 04 (не статический путь)
+    try:
+        lp = find_run("outputs", "gamma_star", require="labels.parquet") / "labels.parquet"
+    except FileNotFoundError:
+        lp = None
+    types = pd.read_parquet(lp, columns=["territory_id", "leiden_consensus"]) if lp is not None else None
+    if types is None: ctx.log("WARNING: run 04 с labels.parquet не найден — кросс-таб и ARI скипнуты")
     summary, xtabs = {"labels_source": str(lp) if types is not None else None}, []
     for sname, s in series.items():
         w = s.to_frame("v").join(df[["territory_id", "month"]]).pivot(

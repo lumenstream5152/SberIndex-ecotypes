@@ -1,8 +1,11 @@
 """Графовый этап (research/23 «Инженерная спека графа», §РЕШЕНИЯ ДЛЯ СБОРКИ).
 
 Протокол:
-- сходство: log-приросты агрегата «Все категории» с кросс-секционным демеанингом
-  по месяцу (lr_dm[i,t] = lr[i,t] − mean_i lr[·,t]). Сырые приросты вырождены
+- сходство: cfg.graph.similarity. Прод — m3_multichannel (победитель бенчмарка
+  мер, PREREG_DEVIATIONS №10: Fisher-z среднее корреляций M2-остатков по 5 чистым
+  категориям, measures.sim_M3). Строка сравнения — m2_residual_corr: log-приросты
+  агрегата «Все категории» с кросс-секционным демеанингом по месяцу
+  (lr_dm[i,t] = lr[i,t] − mean_i lr[·,t]). Сырые приросты вырождены
   (med r = 0.906, FDR пуст [checked 23 §0]) — медианы обоих пишем в metrics как
   анти-факты.
 - каркас E* = (kNN(10, union) по W = clip(R, 0) ∩ BH-FDR q=0.05, t-тест, df=T−3)
@@ -40,6 +43,7 @@ import scipy.stats as st
 import yaml
 from scipy.sparse.csgraph import connected_components
 
+from . import measures
 from .config import Config
 from .panel import PARTS
 from .runctx import RunContext
@@ -135,11 +139,29 @@ def build_graphs(cfg: Config, processed_dir: str | Path = "data/processed",
     log_all = _piv("log_all")                                   # (n, T)
     shares = np.stack([_piv(f"share_{s}") for s in PARTS], axis=2)  # (n, T, 6)
 
-    # --- слой сходства: демеаненные log-приросты -------------------------------
+    # --- слой сходства ------------------------------------------------------------
     lr = np.diff(log_all, axis=1)                               # (n, T−1)
-    lr_dm = lr - lr.mean(axis=0, keepdims=True)
-    R = _corr(lr_dm)
     R_raw = _corr(lr)  # анти-факт: сырые приросты вырождены (23 §0)
+    if gcfg.similarity == "m3_multichannel":
+        # M3 (победитель бенчмарка мер, PREREG_DEVIATIONS №10): Fisher-z среднее
+        # корреляций M2-остатков по 5 чистым категориям — логика в measures.py.
+        # vals восстанавливаются тождеством val_c = share_c·exp(log_all)
+        # [checked на панели: max rel err 5e-7] — тестовая мини-панель val_ не хранит.
+        vals5 = shares[:, :, :5] * np.exp(log_all)[:, :, None]  # (n, T, 5)
+        mdata = measures.MeasureData(
+            tids=tids, log_all=log_all, sa_all=measures.sa_from_log(log_all),
+            shares=shares, clr=measures.clr_transform(shares), vals=vals5)
+        R = measures.sim_M3(mdata).matrix
+        demeaning_note = ("m3_multichannel (measures.sim_M3): per-категория "
+                          "month-of-year sa → diff → кросс-секционный демеанинг → "
+                          "Fisher-z среднее 5 корреляционных матриц")
+    else:
+        # M2: демеаненные log-приросты агрегата (десезон не нужен: общий месячный
+        # фактор вычитается кросс-секционно — research/23 §РЕШЕНИЯ)
+        lr_dm = lr - lr.mean(axis=0, keepdims=True)
+        R = _corr(lr_dm)
+        demeaning_note = ("cross_sectional_by_month: lr_dm[i,t] = lr[i,t] − "
+                          "mean_i lr[·,t]")
 
     ii, jj = np.triu_indices(n, k=1)
     r_all = R[ii, jj]
@@ -275,7 +297,7 @@ def build_graphs(cfg: Config, processed_dir: str | Path = "data/processed",
         "stage": "03_build_graphs (research/23)",
         "built": datetime.now().isoformat(timespec="seconds"),
         "similarity": gcfg.similarity,
-        "demeanging": "cross_sectional_by_month: lr_dm[i,t] = lr[i,t] − mean_i lr[·,t]",
+        "demeanging": demeaning_note,
         "knn_k": int(gcfg.knn_k), "knn_sym": gcfg.knn_sym,
         "fdr_q": float(gcfg.fdr_q), "fdr_df": int(df),
         "safety_top": int(gcfg.safety_top),
