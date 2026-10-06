@@ -660,8 +660,14 @@ def load_interpretability(path: str | Path, methods: list[str]
     p = Path(path)
     if not p.exists():
         return None, f"файл рубрики отсутствует: {p}"
-    with open(p, encoding="utf-8") as f:
-        raw = yaml.safe_load(f) or {}
+    try:
+        with open(p, encoding="utf-8") as f:
+            raw = yaml.safe_load(f) or {}
+    except yaml.YAMLError as e:
+        # 06.10: configs/interpretability_rubric.yaml стр.39 `spectral_knn:{...}`
+        # без пробела после двоеточия — невалидный YAML; конфиг вне границ правок
+        # скорингового слоя → честная деградация «ноги нет», не падение прогона.
+        return None, f"файл рубрики не парсится как YAML ({p.name}: {e}) — нога отсутствует"
     scores = raw.get("scores") or {}
     vals = {}
     for m in methods:
@@ -685,19 +691,31 @@ def _rater_score(v) -> float:
 
 def wilcoxon_table(scores: pd.DataFrame, correction: str = "BH") -> pd.DataFrame:
     """Парные Wilcoxon signed-rank по общим репликам (prereg §B). scores:
-    (реплики × методы). BH-поправка по семейству пар. Вырожденные пары
-    (все разности 0) → p=1.0 с флагом."""
+    (реплики × методы); NaN-строки отбрасываются попарно (тяжёлые методы имеют
+    меньше реплик — «общие реплики» пары). BH-поправка по семейству пар.
+    Вырожденные пары (все разности 0) → p=1.0 с флагом; <5 пар наблюдений →
+    p=NaN (Wilcoxon не определён), флаг."""
     methods = list(scores.columns)
     rows = []
     for a, b in combinations(methods, 2):
-        d = scores[a] - scores[b]
+        d = (scores[a] - scores[b]).dropna()
+        n_common = int(len(d))
+        if n_common < 5:
+            rows.append(dict(a=a, b=b, stat=np.nan, p=np.nan,
+                             n_common=n_common, degenerate=False))
+            continue
         if (d == 0).all():
-            rows.append(dict(a=a, b=b, stat=0.0, p=1.0, degenerate=True))
+            rows.append(dict(a=a, b=b, stat=0.0, p=1.0,
+                             n_common=n_common, degenerate=True))
             continue
         stat, p = _scipy_wilcoxon(d)
-        rows.append(dict(a=a, b=b, stat=float(stat), p=float(p), degenerate=False))
+        rows.append(dict(a=a, b=b, stat=float(stat), p=float(p),
+                         n_common=n_common, degenerate=False))
     out = pd.DataFrame(rows)
-    out["p_adj"] = bh_adjust(out["p"].to_numpy())
+    ok = out["p"].notna()
+    out["p_adj"] = np.nan
+    if ok.any():
+        out.loc[ok, "p_adj"] = bh_adjust(out.loc[ok, "p"].to_numpy())
     return out
 
 

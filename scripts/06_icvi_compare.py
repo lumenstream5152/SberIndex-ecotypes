@@ -403,15 +403,14 @@ def main() -> None:
         mdf_out = mdf_out.reset_index(names="method")
         mdf_out.to_parquet(ctx.dir / "table_methods.parquet", index=False)
         # Wilcoxon signed-rank по общим репликам ЦЕНТРАЛЬНОЙ ячейки A (n=15,
-        # prereg §B; BH-поправка по семейству пар внутри ячейки)
+        # prereg §B; BH-поправка по семейству пар внутри ячейки). У тяжёлых
+        # методов 5 реплик → NaN-выравнивание, попарное отбрасывание внутри.
         central = vdf[vdf.cell == "A:K6:d0.05:a80.0:mu-"]
-        wrows: dict[str, list[float]] = {}
-        for mname in method_cols:
-            vals = (central.loc[central.method == base_of[mname]]
-                    .sort_values("replica")["nmi"].dropna().tolist())
-            if len(vals) >= 2:
-                wrows[mname] = vals
-        wilc = bm.wilcoxon_table(pd.DataFrame(wrows)) if wrows else pd.DataFrame()
+        wdf = (central.pivot_table(index="replica", columns="method",
+                                   values="nmi", aggfunc="first")
+               .rename(columns={b: m for m, b in base_of.items()}))
+        wdf = wdf[[m for m in method_cols if m in wdf.columns]]
+        wilc = bm.wilcoxon_table(wdf) if wdf.shape[1] >= 2 else pd.DataFrame()
 
         nmi_note = (
             "NMI_synth — ПОЛНАЯ сетка 06b, медиана по сетке A (9 ячеек × 15 "
@@ -437,7 +436,7 @@ def main() -> None:
             "notes": [
                 nmi_note,
                 "Wilcoxon — по общим репликам центральной ячейки A "
-                f"(n={max((len(v) for v in wrows.values()), default=0)}"
+                f"(n={int(wdf.count().max()) if not wdf.empty else 0}"
                 f"{', дымовая проверка механики' if not is_full else ''})",
                 "тайминг — замер полного fit в этом скрипте (run.log 04 хранит "
                 "только суммарное время прогона)",

@@ -132,7 +132,23 @@ def test_wilcoxon_paired_known():
     # вырожденная пара (b ≡ c) → p=1.0 с флагом, без падения scipy
     row_bc = df[((df.a == "b") & (df.b == "c"))].iloc[0]
     assert row_bc.degenerate and row_bc.p == 1.0
-    assert (df.p_adj >= df.p).all() and (df.p_adj <= 1).all()
+    ok = df.p_adj.notna()
+    assert (df.p_adj[ok] >= df.p[ok]).all() and (df.p_adj[ok] <= 1).all()
+
+
+def test_wilcoxon_nan_unbalanced_replicas():
+    """Тяжёлые методы имеют меньше реплик (eva: 5 из 15) → NaN-выравнивание,
+    попарное отбрасывание; пары с <5 общих реплик → p=NaN, не падение."""
+    rng = np.random.default_rng(1)
+    a = rng.normal(0.5, 0.1, 15)
+    b = rng.normal(0.0, 0.1, 15)
+    heavy = np.full(15, np.nan)
+    heavy[:5] = rng.normal(0.45, 0.1, 5)
+    df = bm.wilcoxon_table(pd.DataFrame({"a": a, "b": b, "heavy": heavy}))
+    row = df[(df.a == "a") & (df.b == "heavy")].iloc[0]
+    assert row.n_common == 5 and np.isfinite(row.p)
+    row_ab = df[(df.a == "a") & (df.b == "b")].iloc[0]
+    assert row_ab.n_common == 15
 
 
 def test_bh_adjust_monotone():
@@ -209,6 +225,17 @@ def test_load_interpretability_empty(tmp_path):
     assert s is None and "не заполнена" in status
     s, status = bm.load_interpretability(tmp_path / "none.yaml", ["kmeans"])
     assert s is None and "отсутствует" in status
+
+
+def test_load_interpretability_broken_yaml(tmp_path):
+    """Битый YAML (как configs/interpretability_rubric.yaml стр.39 на 06.10 —
+    `spectral_knn:{` без пробела) → честная деградация (None, причина),
+    не ParserError в конце двухчасового прогона."""
+    p = tmp_path / "rub.yaml"
+    p.write_text("scores:\n  kmeans: {rater_b: {C1: 5}}\n"
+                 "  spectral_knn:{rater_b: {C1: 3}}\n", encoding="utf-8")
+    s, status = bm.load_interpretability(p, ["kmeans"])
+    assert s is None and "не парсится" in status
 
 
 def test_load_interpretability_percriteria_dict(tmp_path):

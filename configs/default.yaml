@@ -17,7 +17,7 @@ panel:                           # research/21
   market_residual: true          # кросс-секционный демеанинг по месяцу — ОБЯЗАТЕЛЬНО (сырые приросты вырождены)
 
 graph:                           # research/23
-  similarity: m2_residual_corr   # m1_deseason | m2_residual_corr | m3_multichannel | m4_lag | m5_aitchison | m6_dtw_level | m7_dtw_clr | m8_gravity | m9_blend | m10_snf | m11_learned
+  similarity: m3_multichannel    # победитель предрегистрированного бенчмарка мер (PREREG_DEVIATIONS №10, run 20261006_150618); m2_residual_corr — строка сравнения
   knn_k: 10
   knn_sym: union                 # mutual даёт 102 изолята — запрещён
   fdr_q: 0.05                    # BH по всем 2.03M пар; эффективный |r|≥0.577
