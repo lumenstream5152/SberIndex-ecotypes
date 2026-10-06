@@ -156,6 +156,30 @@ def test_scoring_candidates_excludes_anti_and_failed():
                for x in ("X1", "X2", "X3"))
 
 
+# ---------------------------------------------------------------- F1 дрейф-блока
+
+def test_f1_report_value_diagnosis():
+    """Фиксирует диагноз аномалии «f1_mean=0.0 у всех методов» (верификация 06b,
+    05.10): это не баг f1_type_switch, а структурное свойство статических
+    методов (тайлом → 0 предсказанных смен) + неопределённость при δ=0."""
+    T, n = 24, 50
+    z_true = np.zeros((T, n), dtype=int)
+    z_true[10:, :5] = 1                       # 5 дрейф-событий в t=10
+    tiled = np.tile(np.zeros(n, dtype=int), (T, 1))  # статический метод: смен нет
+    # δ>0: события есть, статика их не детектирует → честный структурный 0
+    assert bm.f1_report_value(z_true, tiled, window=1) == 0.0
+    # δ=0: событий в истине нет → метрика не определена → NaN (не «провал»)
+    assert np.isnan(bm.f1_report_value(np.zeros((T, n), dtype=int), tiled))
+    # арифметика окна ±1: смена в t=11 при истинной t=10 детектируется
+    z_pred = np.zeros((T, n), dtype=int)
+    z_pred[11:, :5] = 1
+    assert bm.f1_report_value(z_true, z_pred, window=1) == 1.0
+    # вне окна — нет
+    z_pred2 = np.zeros((T, n), dtype=int)
+    z_pred2[15:, :5] = 1
+    assert bm.f1_report_value(z_true, z_pred2, window=1) == 0.0
+
+
 # ---------------------------------------------------------------- композит методов
 
 def test_method_composite_two_versions_without_interpretability():
@@ -185,3 +209,14 @@ def test_load_interpretability_empty(tmp_path):
     assert s is None and "не заполнена" in status
     s, status = bm.load_interpretability(tmp_path / "none.yaml", ["kmeans"])
     assert s is None and "отсутствует" in status
+
+
+def test_load_interpretability_percriteria_dict(tmp_path):
+    """Рубрика допускает покритериальный словарь {C1..C5} (шапка
+    configs/interpretability_rubric.yaml) — усредняем, а не падаем на float(dict)."""
+    p = tmp_path / "rub.yaml"
+    p.write_text(
+        "scores:\n"
+        "  kmeans: {rater_a: 4.0, rater_b: {C1: 5, C2: 3}}\n", encoding="utf-8")
+    s, status = bm.load_interpretability(p, ["kmeans"])
+    assert status == "ok" and np.isclose(s["kmeans"], 0.5 * (4.0 + 4.0))

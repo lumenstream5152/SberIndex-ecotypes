@@ -32,7 +32,7 @@ import pandas as pd
 from ecotypes import benchmark as bm
 from ecotypes.config import load_config, load_prereg
 from ecotypes.seeds import set_all_seeds, stage_seed
-from ecotypes.synthetic import (ari, f1_type_switch, make_lfr_dir,
+from ecotypes.synthetic import (ari, make_lfr_dir,
                                 make_ppdataset, nmi, per_snapshot_nmi)
 
 log = logging.getLogger("06b")
@@ -127,7 +127,7 @@ def main() -> None:
                     cell=cell_key, replica=rep, method=mname,
                     nmi=nmi(z_true, lab), ari=ari(z_true, lab),
                     per_snapshot_nmi_mean=float(per_snapshot_nmi(ds["z"], tiled).mean()),
-                    f1_type_switch=f1_type_switch(ds["z"], tiled, window=1),
+                    f1_type_switch=bm.f1_report_value(ds["z"], tiled, window=1),
                     fit_s=round(time.time() - tm, 2)))
             log.info("%s rep %d/%d (%.0fs)", cell_key, rep + 1, replicas,
                      time.time() - t0)
@@ -151,7 +151,11 @@ def main() -> None:
                 grids=list(args.grids), cells=cells, total_s=round(time.time() - t0, 1),
                 note="дрейф-метрики (per-snapshot NMI, F1 ±1 мес) — отчётный блок, "
                      "в композит метода НЕ входят (prereg §B); NMI_synth ноги "
-                     "композита = медиана по сетке A")
+                     "композита = медиана по сетке A. F1: все методы зоопарка "
+                     "статические (метки тайлятся) → при δ>0 F1≡0 структурно "
+                     "(0 предсказанных смен при >0 истинных), осмыслен только для "
+                     "per-snapshot методов; при δ=0 истинных событий нет → NaN "
+                     "(«метрика не определена», benchmark.f1_report_value)")
     (OUT_DIR / f"synth_grid_meta_{ts}.json").write_text(
         json.dumps(meta, ensure_ascii=False, indent=2), encoding="utf-8")
     log.info("готово: %s (%d строк), %s; %.0fs", p_long, len(df), p_sum,

@@ -62,6 +62,7 @@ log = logging.getLogger(__name__)
 
 __all__ = [
     "zscore", "gini", "internal_edge_ratio", "hungarian_mapping", "modal_labels",
+    "f1_report_value",
     "graph_from_npz", "synthetic_measure_data", "synthetic_feature_matrix",
     "leiden_ensemble", "kmeans_protocol", "scoring_candidates",
     "oddeven_halves", "measure_graph_from_sim",
@@ -135,6 +136,26 @@ def modal_labels(z: np.ndarray) -> np.ndarray:
     for i in range(n):
         out[i] = np.bincount(z[:, i]).argmax()
     return out
+
+
+def f1_report_value(z_true: np.ndarray, z_pred: np.ndarray, window: int = 1) -> float:
+    """F1 детекции смены типа для отчётного дрейф-блока (06b).
+
+    Диагноз по верификации 06b (05.10, f1_mean=0.0 у всех методов): багом не
+    является. Все методы зоопарка статические, их метки тайлятся по месяцам →
+    предсказанных смен 0 → при δ>0 tp=0, fn=|дрейф| → F1≡0 структурно (метрика
+    осмысленна только для per-snapshot методов, которых в 06b нет). При δ=0
+    истинных событий нет вообще → F1 = 0/0 формально не определён; сырые 0.0 в
+    таких ячейках читались бы как «провал детекции», поэтому здесь → NaN
+    («нет событий»). f1_type_switch (synthetic.py) не трогаем — её арифметика
+    верна (истина vs истина = 1.0; смена в окне ±window = 1.0; вне окна = 0.0).
+    """
+    from .synthetic import f1_type_switch
+
+    z_true = np.asarray(z_true)
+    if not bool((z_true[1:] != z_true[:-1]).any()):
+        return float("nan")
+    return f1_type_switch(z_true, z_pred, window=window)
 
 
 # ---------------------------------------------------------------- графы мер
@@ -477,15 +498,16 @@ def lomo_winners(legs_z: pd.DataFrame, weights: dict[str, float]) -> dict:
 
 def borda_table(legs_z: pd.DataFrame, scores: pd.Series) -> pd.DataFrame:
     """table_C: ранг по каждой ноге + Borda (сумма рангов, меньше = лучше) +
-    ранг композита."""
-    ranks = legs_z.rank(ascending=False).astype(int)
+    ранг композита. NaN-нога (вырождение, напр. M4 odd/even k<2) → NaN-ранг
+    (nullable Int64), кандидат без полной ноги в Borda не участвует."""
+    ranks = legs_z.rank(ascending=False).astype("Int64")
     ranks.columns = [f"rank_{c}" for c in ranks.columns]
     out = ranks.copy()
-    out["borda"] = ranks.sum(axis=1)
-    out["borda_rank"] = out["borda"].rank().astype(int)
+    out["borda"] = ranks.sum(axis=1, min_count=len(ranks.columns))
+    out["borda_rank"] = out["borda"].rank().astype("Int64")
     out["composite"] = scores
-    out["composite_rank"] = scores.rank(ascending=False).astype(int)
-    return out.sort_values("composite_rank")
+    out["composite_rank"] = scores.rank(ascending=False).astype("Int64")
+    return out.sort_values("composite_rank", na_position="last")
 
 
 # ---------------------------------------------------------------- методы
@@ -647,8 +669,16 @@ def load_interpretability(path: str | Path, methods: list[str]
         a, b = cell.get("rater_a"), cell.get("rater_b")
         if a is None or b is None:
             return None, f"рубрика не заполнена (метод {m}: rater_a={a}, rater_b={b})"
-        vals[m] = 0.5 * (float(a) + float(b))
+        vals[m] = 0.5 * (_rater_score(a) + _rater_score(b))
     return pd.Series(vals), "ok"
+
+
+def _rater_score(v) -> float:
+    """Оценка оценщика: число (среднее 1–5) или покритериальный словарь
+    {C1..C5: int} — оба формата разрешены шапкой рубрики."""
+    if isinstance(v, dict):
+        return float(np.mean([float(x) for x in v.values()]))
+    return float(v)
 
 
 # ---------------------------------------------------------------- статистика пар

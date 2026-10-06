@@ -36,20 +36,25 @@ from ecotypes import measures as ms
 from ecotypes.config import load_config, load_prereg
 from ecotypes.runctx import RunContext
 from ecotypes.seeds import set_all_seeds, stage_seed
-from ecotypes.synthetic import ari, nmi
+from ecotypes.synthetic import ari, make_ppdataset, nmi
 
 
-def _find_run(outputs: Path, key: str) -> Path:
-    """Последний outputs/<run>/metrics.json, содержащий ключ key (04/06a)."""
+def _find_run(outputs: Path, key: str, require: str | None = None) -> Path:
+    """Последний outputs/<run>/metrics.json, содержащий ключ key (04/06a).
+    require — обязательный файл рядом с metrics.json (напр. labels.parquet у 04):
+    без него прогон 06 (чей metrics.json тоже несёт 'gamma_star') на повторном
+    запуске находил бы сам себя вместо 04."""
     for d in sorted(outputs.iterdir(), reverse=True):
         m = d / "metrics.json"
-        if m.exists():
-            try:
-                if key in json.loads(m.read_text(encoding="utf-8")):
-                    return d
-            except Exception:
-                continue
-    raise FileNotFoundError(f"в {outputs} нет прогона с metrics.json[{key!r}]")
+        if not m.exists() or (require is not None and not (d / require).exists()):
+            continue
+        try:
+            if key in json.loads(m.read_text(encoding="utf-8")):
+                return d
+        except Exception:
+            continue
+    raise FileNotFoundError(f"в {outputs} нет прогона с metrics.json[{key!r}]"
+                            + (f" и файлом {require}" if require else ""))
 
 
 def _latest_synth_verification(synth_dir: Path) -> Path:
@@ -97,7 +102,7 @@ def main() -> None:
     root = Path(args.out)
     outputs = Path("outputs")
 
-    run04 = _find_run(outputs, "gamma_star")
+    run04 = _find_run(outputs, "gamma_star", require="labels.parquet")
     m04 = json.loads((run04 / "metrics.json").read_text(encoding="utf-8"))
     gamma_star = float(m04["gamma_star"])
     ctx.log(f"γ* из {run04.name}: {gamma_star} (fallback={m04['fallback']}, "
@@ -206,7 +211,13 @@ def main() -> None:
         for mname in candidates:
             legs[mname]["Q"] = float(q_mean[mname])
 
-        # R: NMI против истины на 10 синтетических инстансах (центральная ячейка)
+        # R: NMI против истины на 10 синтетических инстансах (центральная ячейка).
+        # Leiden на синтетике — γ из конфига (1.0), НЕ γ*: RB-γ не масштабно-
+        # инвариантно, шкала весов синтетических kNN-графов иная, чем у реальных
+        # (проверено 06.10: при γ*=0.293 corr-меры M1–M4 вырождаются в k=1 →
+        # NMI≡0 по причине шкалы, не качества меры — нога мертва). Тот же фикс
+        # a priori, что в 06b для методов («плато синтетики не выбирается»).
+        gamma_synth = float(cfg.cluster.leiden.gamma)
         n_r = 10
         for i in range(n_r):
             ti = time.time()
@@ -218,7 +229,7 @@ def main() -> None:
             for mname in candidates:
                 res = fns[mname](md)
                 A_s = bm.measure_graph_from_sim(res, k)
-                cons_s = bm.leiden_ensemble(A_s, gamma_star, seeds30).consensus
+                cons_s = bm.leiden_ensemble(A_s, gamma_synth, seeds30).consensus
                 r_inst.setdefault(mname, []).append(nmi(z_true, cons_s))
             ctx.log(f"R-инстанс {i + 1}/{n_r} ({time.time() - ti:.0f}s)")
         for mname in candidates:
@@ -251,7 +262,9 @@ def main() -> None:
         for c in legs_z.columns:
             table_b[f"z_{c}"] = legs_z[c]
         table_b["composite"] = scores
-        table_b["rank"] = scores.rank(ascending=False).astype(int)
+        # NaN-композит (NaN-нога, напр. M4: вырождение odd/even в k<2) →
+        # rank=NA, кандидат выбывает из ранжирования явно, не молча
+        table_b["rank"] = scores.rank(ascending=False).astype("Int64")
         table_b["ci_lo"] = boot.ci_lo
         table_b["ci_hi"] = boot.ci_hi
         for m, reason in excluded.items():
@@ -265,6 +278,7 @@ def main() -> None:
 
         metrics["measures"] = {
             "candidates": candidates, "excluded": excluded,
+            "gamma_star": gamma_star, "gamma_synth_R": gamma_synth,
             "kmeans_protocol": {"K": km["K"], "veto_failed": km["veto_failed"],
                                 "table": km["table"].to_dict("records")},
             "q_submetrics": qdf.to_dict(), "legs": legs_df.to_dict(),
@@ -275,6 +289,9 @@ def main() -> None:
             "dirichlet": sens.to_dict(), "lomo": lomo,
             "extra": extra,
             "notes": [
+                "NaN-нога (M4: odd/even-половина вырождается в k<2 при γ*) → "
+                "NaN-композит и rank=NA: кандидат выбывает из ранжирования явно; "
+                "z-нормы ноги T считаются по кандидатам с конечным значением",
                 "вырожденный консенсус (k<2 на графе меры при γ*) → атрибутивные "
                 "ICVI NaN (Q из kmeans-сабиндексов), T NaN при вырождении половины; "
                 "S берётся из попарного ARI прогонов (определён всегда); "
@@ -287,6 +304,10 @@ def main() -> None:
                 "(без естественной репликации), дисперсию дают только S и R",
                 "R: потолок статической NMI при δ=0.05 пересчитывается кодом "
                 "(PREREG_DEVIATIONS №1), истина — модальные метки",
+                "R: Leiden на синтетике — γ=1.0 из конфига (как 06b), НЕ γ*=0.293: "
+                "RB-γ не масштабно-инвариантно, на синтетических весах γ* даёт "
+                "k=1 у M1–M4 (проверено 06.10) — нога была бы мертва по причине "
+                "шкалы, не качества; кандидат в PREREG_DEVIATIONS №9",
             ],
         }
         ctx.log(f"композит мер: победитель={verdict['winner']} "
@@ -343,8 +364,12 @@ def main() -> None:
                                         if nmi_rows[mname] else np.nan)
 
         mdf = pd.DataFrame(rows).T
+        # рубрика ключена базовыми именами методов (kmeans, не kmeans_k6)
+        base_names = [base_of[m] for m in method_cols]
         interp, interp_status = bm.load_interpretability(
-            "configs/interpretability_rubric.yaml", method_cols)
+            "configs/interpretability_rubric.yaml", base_names)
+        if interp is not None:
+            interp.index = method_cols
         comp = bm.method_composite(mdf, pm, interp=interp)
         mdf_out = mdf.copy()
         mdf_out["composite_with_zero_interp"] = comp["composite_with_zero_interp"]
@@ -369,8 +394,10 @@ def main() -> None:
             "nmi_synth_replicas": nmi_rows,
             "wilcoxon_central_cell": wilc.to_dict("records"),
             "notes": [
-                "NMI_synth — центральная ячейка с 3 репликами (верификация); "
-                "итоговая нога — медиана по сетке A из 06b (prereg §B)",
+                "NMI_synth — центральная ячейка с 3 репликами (верификация), "
+                "placeholder: ЖДЁМ ПОЛНУЮ СЕТКУ (06b, 15 реплик × все ячейки); "
+                "итоговая нога — медиана по сетке A из 06b (prereg §B), "
+                "значения и ранжирование методов ниже — НЕ финальные",
                 "Wilcoxon на 3 репликах — дымовая проверка механики, не вывод "
                 "(prereg: n=15 после ночной сетки)",
                 "тайминг — замер полного fit в этом скрипте (run.log 04 хранит "
