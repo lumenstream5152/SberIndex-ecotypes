@@ -453,8 +453,11 @@ def _cv_run(df: pd.DataFrame, feats: list[str], months: list[str], horizon: int,
         row = {"fold": fi, "val_month": months[v], "horizon": horizon,
                "n_train": int(len(tr)), **{f"lgbm_{k}": v_ for k, v_ in
                                            binary_metrics(y, p, par.top_decile).items()}}
+        # скор базлайна = +margin (не −margin, как опечатка в §2.3 спеки):
+        # margin = dist_own − min dist чужих (§1.3), corr(margin, y1) > 0 — муверы
+        # смещены к чужим центроидам; отрицательный скор ниже prevalence-прямой
         row.update({f"margin_{k}": v_ for k, v_ in
-                    binary_metrics(y, -va["margin"].to_numpy(), par.top_decile,
+                    binary_metrics(y, va["margin"].to_numpy(), par.top_decile,
                                    brier=False).items()})
         lr = make_pipeline(SimpleImputer(strategy="median"),
                            LogisticRegression(max_iter=2000))
@@ -465,12 +468,19 @@ def _cv_run(df: pd.DataFrame, feats: list[str], months: list[str], horizon: int,
         fold_rows.append(row)
         oof.append(pd.DataFrame({"territory_id": va.territory_id.to_numpy(),
                                  "month_t": va.month_t.to_numpy(), "y": y,
-                                 "p": p, "p_margin": -va["margin"].to_numpy(),
+                                 "p": p, "p_margin": va["margin"].to_numpy(),
                                  "p_logreg5": p_lr}))
     oof_df = pd.concat(oof, ignore_index=True)
     pooled = {"lgbm": binary_metrics(oof_df.y.to_numpy(), oof_df.p.to_numpy(), par.top_decile),
               "margin_rank": binary_metrics(oof_df.y.to_numpy(), oof_df.p_margin.to_numpy(), par.top_decile, brier=False),
               "logreg5": binary_metrics(oof_df.y.to_numpy(), oof_df.p_logreg5.to_numpy(), par.top_decile)}
+    # lift per-fold: радар ранжирует ВНУТРИ месяца — честная продуктовая линза
+    # (pooled PR-AUC при сдвиге prevalence 0.005–0.116 между месяцами искажён)
+    for tag, pre in (("lgbm", "lgbm"), ("margin_rank", "margin"), ("logreg5", "logreg5")):
+        lifts = [r[f"{pre}_pr_auc"] / r[f"{pre}_prevalence"] for r in fold_rows
+                 if r[f"{pre}_prevalence"] > 0]
+        pooled[tag]["mean_fold_lift"] = float(np.mean(lifts))
+        pooled[tag]["median_fold_lift"] = float(np.median(lifts))
     return {"folds": fold_rows, "oof": oof_df, "pooled": pooled,
             "n_folds": len(folds)}
 
