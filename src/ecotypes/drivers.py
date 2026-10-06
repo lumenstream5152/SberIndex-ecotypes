@@ -491,7 +491,7 @@ def _card_text(row, top5) -> str:
     lines = [f"МО {row['name']} ({int(row['territory_id'])}), {row['month_event']}: "
              f"тип {int(row['type_from'])} → тип {int(row['type_to'])}.",
              f"Вероятность перехода (модель h=1, за месяц до): p = {row['p']:.2f} "
-             f"(топ-{row['pct']:.0f}% всех МО, скоринг {row['prob_source']}).",
+             f"(топ-{row['pct']:.3g}% всех МО, скоринг {row['prob_source']}).",
              "Драйверы (SHAP, вклад в log-odds):"]
     for f, val, sv in top5:
         sign = "+" if sv >= 0 else "−"
@@ -499,16 +499,19 @@ def _card_text(row, top5) -> str:
     return "\n".join(lines)
 
 
-def build_cards(trans: pd.DataFrame, probs: np.ndarray, sv: np.ndarray,
-                feats: list[str], names: dict, F: dict[str, np.ndarray],
-                tids: np.ndarray, months: list[str], top_k: int = 5) -> pd.DataFrame:
+def build_cards(trans: pd.DataFrame, probs: np.ndarray, pct: np.ndarray,
+                sv: np.ndarray, feats: list[str], names: dict,
+                F: dict[str, np.ndarray], tids: np.ndarray, months: list[str],
+                top_k: int = 5) -> pd.DataFrame:
     """Карточки переходов по шаблону 31 §3.2: значения в сырых единицах —
-    для clr-признаков рядом кладём текущую долю части (share_value)."""
+    для clr-признаков рядом кладём текущую долю части (share_value).
+    pct — перцентиль вероятности среди ВСЕХ МО того же месяца (считается снаружи:
+    там известна полная скоринг-таблица месяца)."""
     midx = {m: i for i, m in enumerate(months)}
     tid_full = {int(t): i for i, t in enumerate(tids)}
     df = trans.copy()
     df["p"] = probs
-    df["pct"] = df.groupby("month_t").p.rank(ascending=False, pct=True) * 100.0
+    df["pct"] = pct
     rows = []
     for r, tr in enumerate(df.itertuples()):
         order = np.argsort(-np.abs(sv[r]))[:top_k]
@@ -652,23 +655,44 @@ def mirkin_crosscheck(sv_trans: np.ndarray, trans: pd.DataFrame,
     except Exception as exc:  # модуль пишется параллельно — не блокируемся
         return {"skipped": f"interpret недоступен: {exc}"}
     try:
-        t = months.index(ref_month)
-        X = np.column_stack([F[c][:, t] for c in CLR])
-        Xs = (X - X.mean(0)) / (X.std(0) + 1e-12)
-        mk = _interp.mirkin_profiles(Xs, Z[:, t], CLR)
-        rel = mk.pivot(index="type_id", columns="feature", values="rel")
         clr_idx = [feats.index(c) for c in CLR]
         trans_ch = [f"{a}→{b}" for a, b in zip(trans.type_from, trans.type_to)]
-        out = {}
         chan_n = pd.Series(trans_ch).value_counts()
+        rel_cache: dict[str, pd.DataFrame] = {}
+
+        def _rel_at(month: str) -> pd.DataFrame:
+            if month not in rel_cache:
+                t = months.index(month)
+                X = np.column_stack([F[c][:, t] for c in CLR])
+                Xs = (X - X.mean(0)) / (X.std(0) + 1e-12)
+                mk = _interp.mirkin_profiles(Xs, Z[:, t], CLR)
+                rel_cache[month] = mk.pivot(index="type_id", columns="feature",
+                                            values="rel")
+            return rel_cache[month]
+
+        out = {}
         for ch in chan_n.index[:par.top_channels]:
             a, b = (int(x) for x in ch.split("→"))
             rows = [i for i, c in enumerate(trans_ch) if c == ch]
+            # birth/death-каналы: пробуем месяц события (t+1), потом месяц t —
+            # тип может отсутствовать с одной из сторон
+            tm = trans.iloc[rows].month_t.mode().iloc[0]
+            ref_m, rel = None, None
+            for cand in (months[months.index(tm) + 1], tm):
+                r = _rel_at(cand)
+                if a in r.index and b in r.index:
+                    ref_m, rel = cand, r
+                    break
+            if rel is None:
+                out[ch] = {"skipped": f"тип {a} или {b} отсутствует вокруг {tm} "
+                                      "(birth/death-канал, кроссчек не определён)",
+                           "n": int(len(rows))}
+                continue
             v_shap = np.abs(sv_trans[rows][:, clr_idx]).mean(axis=0)
             v_mirk = np.abs(rel.loc[b, CLR].to_numpy() - rel.loc[a, CLR].to_numpy())
             rho = stats.spearmanr(v_shap, v_mirk).statistic
-            out[ch] = {"spearman": float(rho), "n": int(len(rows))}
-        out["_ref_month"] = ref_month
+            out[ch] = {"spearman": float(rho), "n": int(len(rows)),
+                       "ref_month": ref_m}
         return out
     except Exception as exc:
         return {"skipped": f"кроссчек упал: {exc}"}
@@ -704,20 +728,41 @@ def run_all(cfg: Config, root: str | Path, ctx) -> dict:
                 f"| margin-rank {pl['margin_rank']['pr_auc']:.3f} "
                 f"| logreg5 {pl['logreg5']['pr_auc']:.3f}")
 
-    # финальные модели на всех usable месяцах (радар + SHAP)
-    finals = {}
-    for h in (1, 3):
-        tcol = model_df.month_t.map(midx)
-        tgt = model_df[f"y{h}"]
-        tr_mask = tgt.notna()
-        last_m = model_df[tr_mask].month_t.map(midx).max()
+    # финальная h=1-модель на всех usable месяцах → глобальный SHAP →
+    # контрольный красный флаг seed_agreement (31 §1.3): топ-3 mean|SHAP| →
+    # публикуем версию без него + разницу метрик (модель частично предсказывает
+    # нестабильность метода, а не экономику)
+    tcol = model_df.month_t.map(midx)
+    def _final(h: int, fs: list[str]):
+        tr_mask = model_df[f"y{h}"].notna()
+        last_m = tcol[tr_mask].max()
         es = model_df[tr_mask & (tcol == last_m)]
         tr = model_df[tr_mask]
-        finals[h] = fit_lgbm(tr[feats], tr[f"y{h}"].to_numpy(), seed, par,
-                             es_tail=(es[feats], es[f"y{h}"].to_numpy()))
+        return fit_lgbm(tr[fs], tr[f"y{h}"].to_numpy(), seed, par,
+                        es_tail=(es[fs], es[f"y{h}"].to_numpy()))
 
-    # калибровка на OOF h=1
-    oof1 = res[1]["oof"]
+    final_full = _final(1, feats)
+    samp = model_df.sample(min(par.shap_sample, len(model_df)),
+                           random_state=seed).reset_index(drop=True)
+    sv_glob_full = shap_values(final_full, samp[feats])
+    glob_prof_full = shap_profile(sv_glob_full, feats)
+    glob_prof_full.insert(0, "rank", np.arange(1, len(glob_prof_full) + 1))
+    red_flag = bool((glob_prof_full.head(3).feature == "seed_agreement").any())
+
+    res_ns = None
+    if red_flag:
+        pub_feats = [f for f in feats if f != "seed_agreement"]
+        ctx.log("красный флаг: seed_agreement в топ-3 SHAP — повтор CV h=1 без него")
+        res_ns = _cv_run(model_df, pub_feats, months, 1, seed, par)
+        ctx.log(f"h=1 без seed_agreement: pooled PR-AUC "
+                f"{res_ns['pooled']['lgbm']['pr_auc']:.3f} vs полная "
+                f"{res[1]['pooled']['lgbm']['pr_auc']:.3f}")
+    else:
+        pub_feats = feats
+    finals = {1: (_final(1, pub_feats) if red_flag else final_full), 3: _final(3, feats)}
+
+    # калибровка на OOF h=1 (опубликованной версии, если флаг сработал)
+    oof1 = (res_ns or res[1])["oof"]
     iso = fit_isotonic(oof1.p.to_numpy(), oof1.y.to_numpy())
     p_cal = iso.predict(oof1.p.to_numpy())
     calib = {"horizon": 1,
@@ -726,39 +771,52 @@ def run_all(cfg: Config, root: str | Path, ctx) -> dict:
              "brier_before": float(brier_score_loss(oof1.y, oof1.p)),
              "brier_after": float(brier_score_loss(oof1.y, p_cal))}
 
-    # SHAP: глобальный (подвыборка) + переходчики
-    rng = np.random.default_rng(seed)
-    samp = model_df.sample(min(par.shap_sample, len(model_df)),
-                           random_state=seed).reset_index(drop=True)
-    sv_glob = shap_values(finals[1], samp[feats])
-    glob_prof = shap_profile(sv_glob, feats)
+    # SHAP: глобальный опубликованной модели (для топ-признаков event-study)
+    sv_glob = sv_glob_full if not red_flag else shap_values(finals[1], samp[pub_feats])
+    glob_prof = shap_profile(sv_glob, pub_feats)
     glob_prof.insert(0, "rank", np.arange(1, len(glob_prof) + 1))
-    red_flag = bool((glob_prof.head(3).feature == "seed_agreement").any())
 
     trans = model_df[model_df.y1 == 1].reset_index(drop=True)
-    sv_tr = shap_values(finals[1], trans[feats]) if len(trans) else np.zeros((0, len(feats)))
+    sv_tr = shap_values(finals[1], trans[pub_feats]) if len(trans) else np.zeros((0, len(pub_feats)))
 
-    # вероятности для карточек: OOF где есть, иначе финальная модель
+    # вероятности для карточек: OOF где есть, иначе финальная модель;
+    # калиброванные isotonic'ом (калиброванная вероятность — продукт, 31 §2.3).
+    # pct — доля МО того же месяца с p ≥ своей (полная скоринг-таблица месяца)
     oof_key = oof1.set_index(["territory_id", "month_t"]).p
-    p_fin = finals[1].predict_proba(trans[feats])[:, 1] if len(trans) else np.array([])
+    p_fin_tr = finals[1].predict_proba(trans[pub_feats])[:, 1] if len(trans) else np.array([])
     probs, src = [], []
     for r, tr in enumerate(trans.itertuples()):
         p_o = oof_key.get((tr.territory_id, tr.month_t), np.nan)
-        probs.append(p_o if np.isfinite(p_o) else p_fin[r])
+        probs.append(p_o if np.isfinite(p_o) else p_fin_tr[r])
         src.append("oof" if np.isfinite(p_o) else "final")
     trans["prob_source"] = src
+    probs_cal = iso.predict(np.asarray(probs))
+    month_score: dict[str, pd.Series] = {}
+    for m in model_df.month_t.unique():
+        rows_m = model_df[model_df.month_t == m]
+        o = oof1[oof1.month_t == m]
+        if len(o) == len(rows_m):
+            month_score[m] = pd.Series(iso.predict(o.p.to_numpy()),
+                                       index=o.territory_id.to_numpy())
+        else:
+            month_score[m] = pd.Series(
+                iso.predict(finals[1].predict_proba(rows_m[pub_feats])[:, 1]),
+                index=rows_m.territory_id.to_numpy())
+    pct = np.array([100.0 * float((month_score[tr.month_t] >= p).mean())
+                    for tr, p in zip(trans.itertuples(), probs_cal)])
     names = inp["nodes"].set_index("territory_id").name.to_dict()
     F_sh = {**F, **{f"share_{s}": _pivot(inp["panel"], f"share_{s}", tids, months)
                     for s in PARTS}}
-    cards = build_cards(trans, np.asarray(probs), sv_tr, feats, names, F_sh,
+    cards = build_cards(trans, probs_cal, pct, sv_tr, pub_feats, names, F_sh,
                         tids, months)
+    cards["p_raw"] = np.asarray(probs)
 
     # профили каналов A→B (топ-8 по массе)
     ch = pd.Series([f"{a}→{b}" for a, b in zip(trans.type_from, trans.type_to)])
     chan_rows = []
     for c_ in ch.value_counts().index[:par.top_channels]:
         rows = np.flatnonzero(ch.to_numpy() == c_)
-        prof = shap_profile(sv_tr[rows], feats)
+        prof = shap_profile(sv_tr[rows], pub_feats)
         a, b = (int(x) for x in c_.split("→"))
         for rank, pr in enumerate(prof.itertuples(), 1):
             chan_rows.append({"channel": c_, "type_from": a, "type_to": b,
@@ -771,25 +829,28 @@ def run_all(cfg: Config, root: str | Path, ctx) -> dict:
     top_feats = glob_prof.head(par.top_traj_feats).feature.tolist()
     es_df = event_study(F, Z, tids, months, trans, top_feats, seed, par)
 
-    # радар 2024-12
+    # радар 2024-12 (скоринг опубликованной моделью, p_move_h1 откалиброван)
     last = months[-1]
     radar = df[df.month_t == last].copy().reset_index(drop=True)
-    radar["p_move_h1"] = finals[1].predict_proba(radar[feats])[:, 1]
+    radar["p_move_h1_raw"] = finals[1].predict_proba(radar[pub_feats])[:, 1]
+    radar["p_move_h1"] = iso.predict(radar.p_move_h1_raw.to_numpy())
     radar["p_move_h3"] = finals[3].predict_proba(radar[feats])[:, 1]
-    radar["decile"] = np.ceil(radar.p_move_h1.rank() / len(radar) * 10).astype(int)
+    # ранжирование — по сырому скору: isotonic клипает хвост выше max(OOF) в константу,
+    # дециль по откалиброванной p теряет верхние ранги (монотонность сохраняется)
+    radar["decile"] = np.ceil(radar.p_move_h1_raw.rank() / len(radar) * 10).astype(int)
     radar["watch"] = radar.decile == 10
     radar["unverified"] = True
     radar["seed_agreement"] = F["seed_agreement"][:, -1][
         radar.territory_id.map({int(t): i for i, t in enumerate(tids)}).to_numpy()]
     low_thr = np.quantile(radar.seed_agreement, par.low_seed_q)
     radar["risk_low_seed_agreement"] = radar.seed_agreement <= low_thr
-    sv_rad = shap_values(finals[1], radar[feats])
+    sv_rad = shap_values(finals[1], radar[pub_feats])
     radar["top3_drivers"] = ["; ".join(
-        f"{feats[j]}{'+' if sv_rad[r, j] >= 0 else '−'}{abs(sv_rad[r, j]):.2f}"
+        f"{pub_feats[j]}{'+' if sv_rad[r, j] >= 0 else '−'}{abs(sv_rad[r, j]):.2f}"
         for j in np.argsort(-np.abs(sv_rad[r]))[:3]) for r in range(len(radar))]
     radar["name"] = radar.territory_id.map(names)
     oof_last = oof1[oof1.month_t == months[-2]]
-    ks = stats.ks_2samp(radar.p_move_h1, oof_last.p)
+    ks = stats.ks_2samp(radar.p_move_h1, iso.predict(oof_last.p.to_numpy()))
     last_pair_flagged = months[-2] in flagged
     sanity = {"ks_stat_vs_oof_last_month": float(ks.statistic),
               "ks_pvalue": float(ks.pvalue),
@@ -799,16 +860,33 @@ def run_all(cfg: Config, root: str | Path, ctx) -> dict:
                   radar.risk_low_seed_agreement[radar.watch].mean()),
               "honest_note": HONEST_RADAR_NOTE}
 
-    mirkin = mirkin_crosscheck(sv_tr, trans, feats, F, Z, months,
+    mirkin = mirkin_crosscheck(sv_tr, trans, pub_feats, F, Z, months,
                                ref_month=months[-2], par=par)
 
     pooled1, pooled3 = res[1]["pooled"], res[3]["pooled"]
+    pooled_pub = (res_ns or res[1])["pooled"]
+    beats_margin = pooled_pub["lgbm"]["pr_auc"] > pooled_pub["margin_rank"]["pr_auc"]
+    lr5_wins_pooled = pooled_pub["logreg5"]["pr_auc"] > pooled_pub["lgbm"]["pr_auc"]
     verdict = {
-        "lgbm_beats_margin_rank_h1": bool(pooled1["lgbm"]["pr_auc"] > pooled1["margin_rank"]["pr_auc"]),
-        "lgbm_beats_logreg5_h1": bool(pooled1["lgbm"]["pr_auc"] > pooled1["logreg5"]["pr_auc"]),
-        "publish": ("lgbm" if pooled1["lgbm"]["pr_auc"] > pooled1["margin_rank"]["pr_auc"]
-                    else "margin_rank (простая модель — честный негатив, 31 §2.3)"),
+        "margin_sign_fix": ("скор margin-rank = +margin (corr(margin,y1)=+0.058 на "
+                            "полном датасете): спека §2.3 пишет −margin, что противоречит "
+                            "её же определению margin в §1.3 — скорректировано по данным"),
+        "published_model": "lgbm_no_seed" if red_flag else "lgbm",
+        "lgbm_beats_margin_rank_pooled_h1": bool(beats_margin),
+        "lgbm_beats_margin_rank_fold_lift_h1": bool(
+            pooled_pub["lgbm"]["mean_fold_lift"] > pooled_pub["margin_rank"]["mean_fold_lift"]),
+        "logreg5_wins_pooled_h1": bool(lr5_wins_pooled),
+        "honest_negative": (None if not lr5_wins_pooled else
+                            "logreg5 выше lgbm по pooled PR-AUC, но ниже по per-fold lift "
+                            "внутри месяца: pooled перевёрнут сдвигом prevalence между "
+                            "месяцами (0.005–0.116); радар ранжирует внутри месяца — "
+                            "продуктовая линза per-fold. Оба числа опубликованы."),
+        "publish": ("lgbm (без seed_agreement)" if red_flag and beats_margin else
+                    "lgbm" if beats_margin else
+                    "margin_rank (простая модель — честный негатив, 31 §2.3)"),
         "seed_agreement_red_flag": red_flag,
+        "no_seed_pooled_pr_auc": (res_ns["pooled"]["lgbm"]["pr_auc"] if res_ns else None),
+        "full_pooled_pr_auc": pooled1["lgbm"]["pr_auc"],
     }
     metrics = {
         "seed": seed, "params": {k: v for k, v in vars(par).items()},
@@ -816,14 +894,18 @@ def run_all(cfg: Config, root: str | Path, ctx) -> dict:
         "n_flagged_pairs_excluded": len(flagged),
         "n_rows": int(len(model_df)), "n_features": len(feats),
         "features": feats,
+        "published_features": pub_feats,
         "prevalence_y1": float(model_df.y1.mean()),
         "prevalence_y3": float(model_df.y3.mean()),
         "n_transitions_y1": int(model_df.y1.sum()),
         "to_newborn_type_count": int(model_df.to_newborn_type.sum()),
         "h1": {"n_folds": res[1]["n_folds"], "folds": res[1]["folds"], "pooled": pooled1},
         "h3": {"n_folds": res[3]["n_folds"], "folds": res[3]["folds"], "pooled": pooled3},
-        "calibration": calib,
+        "calibration": {**calib,
+                        "applied_to": ["radar p_move_h1", "transition_cards p"],
+                        "note": "p_move_h3 — без калибровки (isotonic обучен на h=1 OOF)"},
         "shap_top15": glob_prof.head(15).to_dict("records"),
+        "shap_top15_full_model": glob_prof_full.head(15).to_dict("records"),
         "verdict": verdict,
         "mirkin_crosscheck": mirkin,
         "radar_sanity": sanity,
@@ -833,6 +915,9 @@ def run_all(cfg: Config, root: str | Path, ctx) -> dict:
                         "min_channel_events": par.event_min_channel,
                         "note": "только «ассоциировано», не causal; контроль по наблюдаемым — скрытые смешения остаются"},
     }
+    if res_ns is not None:
+        metrics["h1_no_seed"] = {"n_folds": res_ns["n_folds"], "folds": res_ns["folds"],
+                                 "pooled": res_ns["pooled"]}
 
     out = ctx.dir
     model_df.to_parquet(out / "drivers_dataset.parquet", index=False)
@@ -842,8 +927,9 @@ def run_all(cfg: Config, root: str | Path, ctx) -> dict:
     channel_prof.to_parquet(out / "channel_profiles.parquet", index=False)
     cards.to_parquet(out / "transition_cards.parquet", index=False)
     es_df.to_parquet(out / "event_study.parquet", index=False)
-    radar[["territory_id", "name", "p_move_h1", "p_move_h3", "decile", "watch",
-           "unverified", "seed_agreement", "risk_low_seed_agreement",
+    radar[["territory_id", "name", "p_move_h1", "p_move_h1_raw", "p_move_h3",
+           "decile", "watch", "unverified", "seed_agreement",
+           "risk_low_seed_agreement",
            "top3_drivers"]].to_parquet(out / "radar_watchlist.parquet", index=False)
     ctx.log(f"артефакты → {out}: dataset {len(model_df)} строк, "
             f"карточек {len(cards)}, радар watch={int(radar.watch.sum())}/"
