@@ -1,0 +1,505 @@
+macro:
+  layer: macro
+  approved: false
+  rule: 'prevalence ≥ 0.6 и lift ≥ 2; внешний факт: lift ≥ 2 и покрытие ≥ 30% списка
+    (33 §6.4); утверждает владелец'
+  types:
+    '0':
+      type_id: 0
+      proposed_name: null
+      candidates:
+      - name: Продовольственная периферия
+        prevalence: 0.245
+        lift: 1.21
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.25 (нужно ≥0.6), lift=1.21 (нужно ≥2.0)
+      - name: Сервисные городские ядра
+        prevalence: 0.08
+        lift: 0.4
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.08 (нужно ≥0.6), lift=0.40 (нужно ≥2.0)
+      - name: Региональные сервисные центры
+        prevalence: 0.223
+        lift: 0.64
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.22 (нужно ≥0.6), lift=0.64 (нужно ≥2.0)
+      - name: Летне-курортный профиль
+        prevalence: 0.393
+        lift: 1.18
+        external_lift: 1.22
+        external_coverage: 1.0
+        verdict: false
+        reason: 'внешний факт слаб: lift=1.22, покрытие списка=100%'
+      - name: Сезонные северные территории
+        prevalence: 0.215
+        lift: 0.97
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.22 (нужно ≥0.6), lift=0.97 (нужно ≥2.0)
+      - name: Маркетплейс-конвергенты
+        prevalence: 0.401
+        lift: 1.2
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.40 (нужно ≥0.6), lift=1.20 (нужно ≥2.0)
+      - name: Моногородской профиль
+        prevalence: 0.109
+        lift: 1.14
+        external_lift: 1.14
+        external_coverage: 0.938
+        verdict: false
+        reason: 'внешний факт слаб: lift=1.14, покрытие списка=94%'
+      note: 'имя не присвоено: ни один кандидат не прошёл фильтры — остаётся «тип
+        K0»'
+    '1':
+      type_id: 1
+      proposed_name: Сервисные городские ядра
+      candidates:
+      - name: Продовольственная периферия
+        prevalence: 0.0
+        lift: 0.0
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.00 (нужно ≥0.6), lift=0.00 (нужно ≥2.0)
+      - name: Сервисные городские ядра
+        prevalence: 0.801
+        lift: 4.01
+        external_lift: null
+        external_coverage: null
+        verdict: true
+        reason: null
+      - name: Региональные сервисные центры
+        prevalence: 0.969
+        lift: 2.8
+        external_lift: null
+        external_coverage: null
+        verdict: true
+        reason: null
+      - name: Летне-курортный профиль
+        prevalence: 0.02
+        lift: 0.06
+        external_lift: 0.0
+        external_coverage: 0.0
+        verdict: false
+        reason: 'внешний факт слаб: lift=0.00, покрытие списка=0%'
+      - name: Сезонные северные территории
+        prevalence: 0.398
+        lift: 1.79
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.40 (нужно ≥0.6), lift=1.79 (нужно ≥2.0)
+      - name: Маркетплейс-конвергенты
+        prevalence: 0.005
+        lift: 0.02
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.01 (нужно ≥0.6), lift=0.02 (нужно ≥2.0)
+      - name: Моногородской профиль
+        prevalence: 0.0
+        lift: 0.0
+        external_lift: 0.0
+        external_coverage: 0.0
+        verdict: false
+        reason: 'внешний факт слаб: lift=0.00, покрытие списка=0%'
+      note: null
+    '2':
+      type_id: 2
+      proposed_name: null
+      candidates:
+      - name: Продовольственная периферия
+        prevalence: 0.012
+        lift: 0.06
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.01 (нужно ≥0.6), lift=0.06 (нужно ≥2.0)
+      - name: Сервисные городские ядра
+        prevalence: 0.687
+        lift: 3.44
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: имя занято типом K1 (там prevalence выше) — уникальность в слое
+      - name: Региональные сервисные центры
+        prevalence: 0.843
+        lift: 2.43
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: имя занято типом K1 (там prevalence выше) — уникальность в слое
+      - name: Летне-курортный профиль
+        prevalence: 0.108
+        lift: 0.33
+        external_lift: 0.0
+        external_coverage: 0.0
+        verdict: false
+        reason: 'внешний факт слаб: lift=0.00, покрытие списка=0%'
+      - name: Сезонные северные территории
+        prevalence: 0.078
+        lift: 0.35
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.08 (нужно ≥0.6), lift=0.35 (нужно ≥2.0)
+      - name: Маркетплейс-конвергенты
+        prevalence: 0.042
+        lift: 0.13
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.04 (нужно ≥0.6), lift=0.13 (нужно ≥2.0)
+      - name: Моногородской профиль
+        prevalence: 0.072
+        lift: 0.76
+        external_lift: 0.76
+        external_coverage: 0.062
+        verdict: false
+        reason: 'внешний факт слаб: lift=0.76, покрытие списка=6%'
+      note: 'имя не присвоено: ни один кандидат не прошёл фильтры — остаётся «тип
+        K2»'
+subtypes:
+  layer: subtypes
+  approved: false
+  rule: 'prevalence ≥ 0.6 и lift ≥ 2; внешний факт: lift ≥ 2 и покрытие ≥ 30% списка
+    (33 §6.4); утверждает владелец'
+  types:
+    '0':
+      type_id: 0
+      proposed_name: null
+      candidates:
+      - name: Продовольственная периферия
+        prevalence: 0.255
+        lift: 1.26
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.26 (нужно ≥0.6), lift=1.26 (нужно ≥2.0)
+      - name: Сервисные городские ядра
+        prevalence: 0.059
+        lift: 0.29
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.06 (нужно ≥0.6), lift=0.29 (нужно ≥2.0)
+      - name: Региональные сервисные центры
+        prevalence: 0.167
+        lift: 0.48
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.17 (нужно ≥0.6), lift=0.48 (нужно ≥2.0)
+      - name: Летне-курортный профиль
+        prevalence: 0.416
+        lift: 1.25
+        external_lift: 2.78
+        external_coverage: 0.8
+        verdict: false
+        reason: prevalence=0.42 (нужно ≥0.6), lift=1.25 (нужно ≥2.0)
+      - name: Сезонные северные территории
+        prevalence: 0.221
+        lift: 1.0
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.22 (нужно ≥0.6), lift=1.00 (нужно ≥2.0)
+      - name: Маркетплейс-конвергенты
+        prevalence: 0.312
+        lift: 0.94
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.31 (нужно ≥0.6), lift=0.94 (нужно ≥2.0)
+      - name: Моногородской профиль
+        prevalence: 0.088
+        lift: 0.92
+        external_lift: 0.92
+        external_coverage: 0.266
+        verdict: false
+        reason: 'внешний факт слаб: lift=0.92, покрытие списка=27%'
+      note: 'имя не присвоено: ни один кандидат не прошёл фильтры — остаётся «тип
+        K0»'
+    '1':
+      type_id: 1
+      proposed_name: null
+      candidates:
+      - name: Продовольственная периферия
+        prevalence: 0.311
+        lift: 1.54
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.31 (нужно ≥0.6), lift=1.54 (нужно ≥2.0)
+      - name: Сервисные городские ядра
+        prevalence: 0.046
+        lift: 0.23
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.05 (нужно ≥0.6), lift=0.23 (нужно ≥2.0)
+      - name: Региональные сервисные центры
+        prevalence: 0.137
+        lift: 0.4
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.14 (нужно ≥0.6), lift=0.40 (нужно ≥2.0)
+      - name: Летне-курортный профиль
+        prevalence: 0.5
+        lift: 1.5
+        external_lift: 0.74
+        external_coverage: 0.2
+        verdict: false
+        reason: 'внешний факт слаб: lift=0.74, покрытие списка=20%'
+      - name: Сезонные северные территории
+        prevalence: 0.339
+        lift: 1.53
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.34 (нужно ≥0.6), lift=1.53 (нужно ≥2.0)
+      - name: Маркетплейс-конвергенты
+        prevalence: 0.432
+        lift: 1.3
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.43 (нужно ≥0.6), lift=1.30 (нужно ≥2.0)
+      - name: Моногородской профиль
+        prevalence: 0.049
+        lift: 0.52
+        external_lift: 0.52
+        external_coverage: 0.141
+        verdict: false
+        reason: 'внешний факт слаб: lift=0.52, покрытие списка=14%'
+      note: 'имя не присвоено: ни один кандидат не прошёл фильтры — остаётся «тип
+        K1»'
+    '2':
+      type_id: 2
+      proposed_name: null
+      candidates:
+      - name: Продовольственная периферия
+        prevalence: 0.198
+        lift: 0.98
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.20 (нужно ≥0.6), lift=0.98 (нужно ≥2.0)
+      - name: Сервисные городские ядра
+        prevalence: 0.074
+        lift: 0.37
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.07 (нужно ≥0.6), lift=0.37 (нужно ≥2.0)
+      - name: Региональные сервисные центры
+        prevalence: 0.261
+        lift: 0.75
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.26 (нужно ≥0.6), lift=0.75 (нужно ≥2.0)
+      - name: Летне-курортный профиль
+        prevalence: 0.195
+        lift: 0.59
+        external_lift: 0.0
+        external_coverage: 0.0
+        verdict: false
+        reason: 'внешний факт слаб: lift=0.00, покрытие списка=0%'
+      - name: Сезонные северные территории
+        prevalence: 0.079
+        lift: 0.36
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.08 (нужно ≥0.6), lift=0.36 (нужно ≥2.0)
+      - name: Маркетплейс-конвергенты
+        prevalence: 0.583
+        lift: 1.75
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.58 (нужно ≥0.6), lift=1.75 (нужно ≥2.0)
+      - name: Моногородской профиль
+        prevalence: 0.153
+        lift: 1.61
+        external_lift: 1.61
+        external_coverage: 0.302
+        verdict: false
+        reason: 'внешний факт слаб: lift=1.61, покрытие списка=30%'
+      note: 'имя не присвоено: ни один кандидат не прошёл фильтры — остаётся «тип
+        K2»'
+    '3':
+      type_id: 3
+      proposed_name: null
+      candidates:
+      - name: Продовольственная периферия
+        prevalence: 0.021
+        lift: 0.1
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.02 (нужно ≥0.6), lift=0.10 (нужно ≥2.0)
+      - name: Сервисные городские ядра
+        prevalence: 0.611
+        lift: 3.05
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: имя занято типом K7 (там prevalence выше) — уникальность в слое
+      - name: Региональные сервисные центры
+        prevalence: 0.795
+        lift: 2.29
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: имя занято типом K7 (там prevalence выше) — уникальность в слое
+      - name: Летне-курортный профиль
+        prevalence: 0.121
+        lift: 0.36
+        external_lift: 0.0
+        external_coverage: 0.0
+        verdict: false
+        reason: 'внешний факт слаб: lift=0.00, покрытие списка=0%'
+      - name: Сезонные северные территории
+        prevalence: 0.084
+        lift: 0.38
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.08 (нужно ≥0.6), lift=0.38 (нужно ≥2.0)
+      - name: Маркетплейс-конвергенты
+        prevalence: 0.047
+        lift: 0.14
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.05 (нужно ≥0.6), lift=0.14 (нужно ≥2.0)
+      - name: Моногородской профиль
+        prevalence: 0.089
+        lift: 0.94
+        external_lift: 0.94
+        external_coverage: 0.089
+        verdict: false
+        reason: 'внешний факт слаб: lift=0.94, покрытие списка=9%'
+      note: 'имя не присвоено: ни один кандидат не прошёл фильтры — остаётся «тип
+        K3»'
+    '6':
+      type_id: 6
+      proposed_name: null
+      candidates:
+      - name: Продовольственная периферия
+        prevalence: 0.095
+        lift: 0.47
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.09 (нужно ≥0.6), lift=0.47 (нужно ≥2.0)
+      - name: Сервисные городские ядра
+        prevalence: 0.371
+        lift: 1.85
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.37 (нужно ≥0.6), lift=1.85 (нужно ≥2.0)
+      - name: Региональные сервисные центры
+        prevalence: 0.707
+        lift: 2.04
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: имя занято типом K7 (там prevalence выше) — уникальность в слое
+      - name: Летне-курортный профиль
+        prevalence: 0.448
+        lift: 1.34
+        external_lift: 0.0
+        external_coverage: 0.0
+        verdict: false
+        reason: 'внешний факт слаб: lift=0.00, покрытие списка=0%'
+      - name: Сезонные северные территории
+        prevalence: 0.043
+        lift: 0.19
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.04 (нужно ≥0.6), lift=0.19 (нужно ≥2.0)
+      - name: Маркетплейс-конвергенты
+        prevalence: 0.19
+        lift: 0.57
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.19 (нужно ≥0.6), lift=0.57 (нужно ≥2.0)
+      - name: Моногородской профиль
+        prevalence: 0.31
+        lift: 3.26
+        external_lift: 3.26
+        external_coverage: 0.188
+        verdict: false
+        reason: 'внешний факт слаб: lift=3.26, покрытие списка=19%'
+      note: 'имя не присвоено: ни один кандидат не прошёл фильтры — остаётся «тип
+        K6»'
+    '7':
+      type_id: 7
+      proposed_name: Сервисные городские ядра
+      candidates:
+      - name: Продовольственная периферия
+        prevalence: 0.0
+        lift: 0.0
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.00 (нужно ≥0.6), lift=0.00 (нужно ≥2.0)
+      - name: Сервисные городские ядра
+        prevalence: 0.766
+        lift: 3.83
+        external_lift: null
+        external_coverage: null
+        verdict: true
+        reason: null
+      - name: Региональные сервисные центры
+        prevalence: 0.951
+        lift: 2.74
+        external_lift: null
+        external_coverage: null
+        verdict: true
+        reason: null
+      - name: Летне-курортный профиль
+        prevalence: 0.044
+        lift: 0.13
+        external_lift: 0.0
+        external_coverage: 0.0
+        verdict: false
+        reason: 'внешний факт слаб: lift=0.00, покрытие списка=0%'
+      - name: Сезонные северные территории
+        prevalence: 0.405
+        lift: 1.83
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.40 (нужно ≥0.6), lift=1.83 (нужно ≥2.0)
+      - name: Маркетплейс-конвергенты
+        prevalence: 0.015
+        lift: 0.04
+        external_lift: null
+        external_coverage: null
+        verdict: false
+        reason: prevalence=0.01 (нужно ≥0.6), lift=0.04 (нужно ≥2.0)
+      - name: Моногородской профиль
+        prevalence: 0.015
+        lift: 0.15
+        external_lift: 0.15
+        external_coverage: 0.016
+        verdict: false
+        reason: 'внешний факт слаб: lift=0.15, покрытие списка=2%'
+      note: null

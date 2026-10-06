@@ -57,21 +57,29 @@ def _find_run(outputs: Path, key: str, require: str | None = None) -> Path:
                             + (f" и файлом {require}" if require else ""))
 
 
-def _latest_synth_verification(synth_dir: Path) -> Path:
-    """Последний parquet верификации сетки 06b (cells_mode=central) —
-    источник placeholder-ноги NMI_synth до полной сетки."""
+def _latest_synth_verification(synth_dir: Path) -> tuple[Path, bool]:
+    """Источник ноги NMI_synth: ПОСЛЕДНИЙ parquet сетки 06b. Возвращает
+    (path, is_full). Полная сетка (cells_mode=all) → нога = медиана по сетке A
+    (prereg §B), is_full=True. Иначе — верификация центральной ячейки
+    (3 реплики), placeholder с пометкой «ждём полную сетку», is_full=False."""
     metas = sorted(synth_dir.glob("synth_grid_meta_*.json"), reverse=True)
+    central_fallback = None
     for mp in metas:
         try:
             meta = json.loads(mp.read_text(encoding="utf-8"))
         except Exception:
             continue
-        if meta.get("cells_mode") == "central":
-            pq = mp.with_name(mp.name.replace("synth_grid_meta_", "synth_grid_")
-                              .removesuffix(".json") + ".parquet")
-            if pq.exists():
-                return pq
-    raise FileNotFoundError(f"в {synth_dir} нет верификации (cells_mode=central)")
+        pq = mp.with_name(mp.name.replace("synth_grid_meta_", "synth_grid_")
+                          .removesuffix(".json") + ".parquet")
+        if not pq.exists():
+            continue
+        if meta.get("cells_mode") == "all":
+            return pq, True
+        if meta.get("cells_mode") == "central" and central_fallback is None:
+            central_fallback = pq
+    if central_fallback is not None:
+        return central_fallback, False
+    raise FileNotFoundError(f"в {synth_dir} нет прогонов сетки 06b")
 
 
 def main() -> None:
@@ -155,6 +163,14 @@ def main() -> None:
         extra: dict[str, dict] = {}
         halves = bm.oddeven_halves(data.T)
 
+        def _checkpoint() -> None:
+            """Страховка от внешнего kill (jetsam под memory pressure): ноги
+            части 1 на диске после каждого R-инстанса; восстановление — ручное."""
+            import pickle
+            with open(ctx.dir / "_checkpoint_part1.pkl", "wb") as f:
+                pickle.dump(dict(legs=legs, q_sub=q_sub, s_pairs=s_pairs,
+                                 r_inst=r_inst, extra=extra, km=km), f)
+
         for mname in candidates:
             tm = time.time()
             A_m = bm.graph_from_npz(root / "measures" / f"{mname}.npz")
@@ -204,6 +220,7 @@ def main() -> None:
                             "leg_s_kmeans": float(km_pairs.mean())}
             ctx.log(f"{mname}: S={s_val:.4f} T={t_val:.4f} H={h_val:.4f} "
                     f"({time.time() - tm:.0f}s)")
+        _checkpoint()
 
         # Q-среднее: z саб-индексов по кандидатам → среднее
         qdf = pd.DataFrame(q_sub).T
@@ -232,6 +249,7 @@ def main() -> None:
                 cons_s = bm.leiden_ensemble(A_s, gamma_synth, seeds30).consensus
                 r_inst.setdefault(mname, []).append(nmi(z_true, cons_s))
             ctx.log(f"R-инстанс {i + 1}/{n_r} ({time.time() - ti:.0f}s)")
+            _checkpoint()
         for mname in candidates:
             arr = np.asarray(r_inst[mname], dtype=np.float64)
             r_inst[mname] = arr
@@ -347,21 +365,28 @@ def main() -> None:
             rows[mname] = {**panel, **stab, "timing_s": fit_s, "k": kk}
             ctx.log(f"{mname}: ICVI+стабильность+тайминг ({time.time() - tm:.0f}s)")
 
-        # NMI_synth: верификация сетки 06b (3 реплики центральной ячейки
-        # K=6 δ=0.05) — placeholder до полной сетки; пометка в notes.
-        verif_pq = _latest_synth_verification(Path("outputs/synth_grid"))
+        # NMI_synth: полная сетка 06b (медиана по сетке A, prereg §B), иначе —
+        # верификация центральной ячейки (3 реплики, placeholder с пометкой).
+        verif_pq, is_full = _latest_synth_verification(Path("outputs/synth_grid"))
         vdf = pd.read_parquet(verif_pq)
         if "skipped" in vdf:
             vdf = vdf[vdf["skipped"].isna()]
-        ctx.log(f"NMI_synth ← {verif_pq.name} "
-                f"({len(vdf)} строк, верификация центральной ячейки)")
+        if is_full:
+            vdf = vdf[vdf["cell"].str.startswith("A:")]  # нога = сетка A (prereg §B)
+        ctx.log(f"NMI_synth ← {verif_pq.name} ({len(vdf)} строк, "
+                f"{'ПОЛНАЯ сетка A' if is_full else 'верификация центральной ячейки'})")
         nmi_rows: dict[str, list[float]] = {}
+        nmi_cells: dict[str, int] = {}
         for mname in method_cols:
-            vals = vdf.loc[vdf.method == base_of[mname]].sort_values("replica")
+            vals = vdf.loc[vdf.method == base_of[mname]].sort_values(["cell", "replica"])
             nmi_rows[mname] = vals["nmi"].dropna().tolist()
+            nmi_cells[mname] = int(vals["cell"].nunique())
         for mname in method_cols:
-            rows[mname]["nmi_synth"] = (float(np.mean(nmi_rows[mname]))
+            # медиана по сетке (prereg §B: «медиана по сетке A»); у тяжёлых
+            # методов — по доступным ячейкам (центральная, 5 реплик) с пометкой
+            rows[mname]["nmi_synth"] = (float(np.median(nmi_rows[mname]))
                                         if nmi_rows[mname] else np.nan)
+            rows[mname]["nmi_synth_cells"] = nmi_cells[mname]
 
         mdf = pd.DataFrame(rows).T
         # рубрика ключена базовыми именами методов (kmeans, не kmeans_k6)
@@ -377,10 +402,25 @@ def main() -> None:
             mdf_out["composite_renormalized"] = comp["composite_renormalized"]
         mdf_out = mdf_out.reset_index(names="method")
         mdf_out.to_parquet(ctx.dir / "table_methods.parquet", index=False)
-        wilc = bm.wilcoxon_table(pd.DataFrame(
-            {m: nmi_rows[m] for m in method_cols if len(nmi_rows[m]) >= 2})) \
-            if any(len(v) >= 2 for v in nmi_rows.values()) else pd.DataFrame()
+        # Wilcoxon signed-rank по общим репликам ЦЕНТРАЛЬНОЙ ячейки A (n=15,
+        # prereg §B; BH-поправка по семейству пар внутри ячейки)
+        central = vdf[vdf.cell == "A:K6:d0.05:a80.0:mu-"]
+        wrows: dict[str, list[float]] = {}
+        for mname in method_cols:
+            vals = (central.loc[central.method == base_of[mname]]
+                    .sort_values("replica")["nmi"].dropna().tolist())
+            if len(vals) >= 2:
+                wrows[mname] = vals
+        wilc = bm.wilcoxon_table(pd.DataFrame(wrows)) if wrows else pd.DataFrame()
 
+        nmi_note = (
+            "NMI_synth — ПОЛНАЯ сетка 06b, медиана по сетке A (9 ячеек × 15 "
+            "реплик, prereg §B); тяжёлые методы (eva) — только центральная "
+            "ячейка A (5 реплик), помечено nmi_synth_cells" if is_full else
+            "NMI_synth — центральная ячейка с 3 репликами (верификация), "
+            "placeholder: ЖДЁМ ПОЛНУЮ СЕТКУ (06b, 15 реплик × все ячейки); "
+            "итоговая нога — медиана по сетке A из 06b (prereg §B), "
+            "значения и ранжирование методов ниже — НЕ финальные")
         metrics["methods"] = {
             "table": mdf.reset_index(names="method").to_dict("records"),
             "icvi_report_only_AVI_AVU": icvi_report,
@@ -391,19 +431,20 @@ def main() -> None:
             "winner_zero": str(comp["composite_with_zero_interp"].idxmax()),
             "winner_renormalized": (str(comp["composite_renormalized"].idxmax())
                                     if "composite_renormalized" in comp else None),
+            "nmi_synth_source": {"file": verif_pq.name, "full_grid": is_full},
             "nmi_synth_replicas": nmi_rows,
             "wilcoxon_central_cell": wilc.to_dict("records"),
             "notes": [
-                "NMI_synth — центральная ячейка с 3 репликами (верификация), "
-                "placeholder: ЖДЁМ ПОЛНУЮ СЕТКУ (06b, 15 реплик × все ячейки); "
-                "итоговая нога — медиана по сетке A из 06b (prereg §B), "
-                "значения и ранжирование методов ниже — НЕ финальные",
-                "Wilcoxon на 3 репликах — дымовая проверка механики, не вывод "
-                "(prereg: n=15 после ночной сетки)",
+                nmi_note,
+                "Wilcoxon — по общим репликам центральной ячейки A "
+                f"(n={max((len(v) for v in wrows.values()), default=0)}"
+                f"{', дымовая проверка механики' if not is_full else ''})",
                 "тайминг — замер полного fit в этом скрипте (run.log 04 хранит "
                 "только суммарное время прогона)",
-                "интерпретируемость не заполнена → композит без ноги, обе версии "
-                "(с нулём и перенормированная) — молчаливой перенормировки нет",
+                ("интерпретируемость не заполнена → композит без ноги, обе версии "
+                 "(с нулём и перенормированная) — молчаливой перенормировки нет"
+                 if interp is None else
+                 "интерпретируемость заполнена (оба оценщика) → композит полный"),
                 "Leiden на синтетике — γ из конфига (1.0); плато синтетики "
                 "не выбиралось (анти-тюнинг, фикс a priori)",
             ],
