@@ -1,0 +1,240 @@
+{
+  "gamma_star": 0.293,
+  "plateau": [
+    0.293
+  ],
+  "fallback": true,
+  "features": [
+    "clr_mean_prod",
+    "clr_mean_health",
+    "clr_mean_market",
+    "clr_mean_food",
+    "clr_mean_transp",
+    "clr_mean_proch",
+    "level_mean",
+    "yoy_all_med",
+    "yoy_market_med",
+    "dclr_market",
+    "dec_amp_all",
+    "season_std"
+  ],
+  "gmm_bic": {
+    "gmm_full": {
+      "4": 9.261863208599014,
+      "6": 9.293076142700622,
+      "8": 9.603536986157465,
+      "10": 10.003425293282035,
+      "12": 10.383383143752138
+    },
+    "gmm_diag": {
+      "4": 27.07834645534008,
+      "6": 26.07436915685824,
+      "8": 25.601571240282134,
+      "10": 25.2133837629612,
+      "12": 24.753621745408214
+    }
+  },
+  "plateau_at_gamma_star": {
+    "gamma": 0.293,
+    "k_med": 3.0,
+    "k_lo": 3.0,
+    "k_hi": 3.0,
+    "ari_med": 0.9314517577272974,
+    "ari_min": 0.794111234796205,
+    "q_med": 0.39050859092693807,
+    "singleton_share": 0.0,
+    "max_share": 0.8199404761904762,
+    "icvi_sw": 0.05113189473736199,
+    "icvi_ch": 0.09169392948708588,
+    "icvi_sdbw": 0.6344023256330196,
+    "icvi_mq": 0.031537710100534556,
+    "icvi_comp": 0.18409182861754075
+  },
+  "consensus": {
+    "ari_to_singles_med": 0.9730090587239216,
+    "ari_to_singles_min": 0.8423120202845996,
+    "seed_ari_med": 0.9314517577272974,
+    "seed_ari_min": 0.794111234796205,
+    "singleton_share": 0.0,
+    "max_share": 0.8204365079365079
+  },
+  "methods": {
+    "leiden_consensus": {
+      "k": 3,
+      "Q": 0.3858,
+      "SW": 0.0471
+    },
+    "kmeans_k6": {
+      "k": 6,
+      "Q": 0.2998,
+      "SW": 0.1817
+    },
+    "ward_k6": {
+      "k": 6,
+      "Q": 0.3167,
+      "SW": 0.1303
+    },
+    "gmm_full_k6": {
+      "k": 6,
+      "Q": 0.3381,
+      "SW": 0.0787
+    },
+    "gmm_diag_k6": {
+      "k": 6,
+      "Q": 0.3249,
+      "SW": 0.1118
+    },
+    "spectral_knn_k6": {
+      "k": 6,
+      "Q": 0.3561,
+      "SW": 0.1065
+    },
+    "kefrin": {
+      "k": 6,
+      "Q": 0.3453,
+      "SW": 0.1764
+    },
+    "louvain": {
+      "k": 11,
+      "Q": 0.5976,
+      "SW": -0.0619
+    },
+    "infomap": {
+      "k": 54,
+      "Q": 0.5547,
+      "SW": -0.1231
+    },
+    "eva": {
+      "k": 11,
+      "Q": 0.5959,
+      "SW": -0.0619
+    }
+  },
+  "nmi_pairwise": {
+    "leiden_consensus": {
+      "leiden_consensus": 1.0,
+      "kmeans_k6": 0.2162,
+      "ward_k6": 0.244,
+      "gmm_full_k6": 0.2654,
+      "gmm_diag_k6": 0.2435,
+      "spectral_knn_k6": 0.3802,
+      "kefrin": 0.2636,
+      "louvain": 0.3576,
+      "infomap": 0.2665,
+      "eva": 0.3657
+    },
+    "kmeans_k6": {
+      "leiden_consensus": 0.2162,
+      "kmeans_k6": 1.0,
+      "ward_k6": 0.5302,
+      "gmm_full_k6": 0.3991,
+      "gmm_diag_k6": 0.5149,
+      "spectral_knn_k6": 0.5123,
+      "kefrin": 0.7332,
+      "louvain": 0.199,
+      "infomap": 0.237,
+      "eva": 0.1948
+    },
+    "ward_k6": {
+      "leiden_consensus": 0.244,
+      "kmeans_k6": 0.5302,
+      "ward_k6": 1.0,
+      "gmm_full_k6": 0.4118,
+      "gmm_diag_k6": 0.4747,
+      "spectral_knn_k6": 0.5552,
+      "kefrin": 0.5765,
+      "louvain": 0.2086,
+      "infomap": 0.2418,
+      "eva": 0.2038
+    },
+    "gmm_full_k6": {
+      "leiden_consensus": 0.2654,
+      "kmeans_k6": 0.3991,
+      "ward_k6": 0.4118,
+      "gmm_full_k6": 1.0,
+      "gmm_diag_k6": 0.538,
+      "spectral_knn_k6": 0.4928,
+      "kefrin": 0.4378,
+      "louvain": 0.2369,
+      "infomap": 0.266,
+      "eva": 0.2366
+    },
+    "gmm_diag_k6": {
+      "leiden_consensus": 0.2435,
+      "kmeans_k6": 0.5149,
+      "ward_k6": 0.4747,
+      "gmm_full_k6": 0.538,
+      "gmm_diag_k6": 1.0,
+      "spectral_knn_k6": 0.5297,
+      "kefrin": 0.5312,
+      "louvain": 0.238,
+      "infomap": 0.2675,
+      "eva": 0.2313
+    },
+    "spectral_knn_k6": {
+      "leiden_consensus": 0.3802,
+      "kmeans_k6": 0.5123,
+      "ward_k6": 0.5552,
+      "gmm_full_k6": 0.4928,
+      "gmm_diag_k6": 0.5297,
+      "spectral_knn_k6": 1.0,
+      "kefrin": 0.5894,
+      "louvain": 0.255,
+      "infomap": 0.2539,
+      "eva": 0.2628
+    },
+    "kefrin": {
+      "leiden_consensus": 0.2636,
+      "kmeans_k6": 0.7332,
+      "ward_k6": 0.5765,
+      "gmm_full_k6": 0.4378,
+      "gmm_diag_k6": 0.5312,
+      "spectral_knn_k6": 0.5894,
+      "kefrin": 1.0,
+      "louvain": 0.23,
+      "infomap": 0.2532,
+      "eva": 0.2224
+    },
+    "louvain": {
+      "leiden_consensus": 0.3576,
+      "kmeans_k6": 0.199,
+      "ward_k6": 0.2086,
+      "gmm_full_k6": 0.2369,
+      "gmm_diag_k6": 0.238,
+      "spectral_knn_k6": 0.255,
+      "kefrin": 0.23,
+      "louvain": 1.0,
+      "infomap": 0.6903,
+      "eva": 0.7391
+    },
+    "infomap": {
+      "leiden_consensus": 0.2665,
+      "kmeans_k6": 0.237,
+      "ward_k6": 0.2418,
+      "gmm_full_k6": 0.266,
+      "gmm_diag_k6": 0.2675,
+      "spectral_knn_k6": 0.2539,
+      "kefrin": 0.2532,
+      "louvain": 0.6903,
+      "infomap": 1.0,
+      "eva": 0.6832
+    },
+    "eva": {
+      "leiden_consensus": 0.3657,
+      "kmeans_k6": 0.1948,
+      "ward_k6": 0.2038,
+      "gmm_full_k6": 0.2366,
+      "gmm_diag_k6": 0.2313,
+      "spectral_knn_k6": 0.2628,
+      "kefrin": 0.2224,
+      "louvain": 0.7391,
+      "infomap": 0.6832,
+      "eva": 1.0
+    }
+  },
+  "nmi_pairwise_summary": {
+    "med": 0.2664967264166444,
+    "min": 0.19479399605577208,
+    "max": 0.7391052973446816
+  }
+}
