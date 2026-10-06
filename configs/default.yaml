@@ -33,7 +33,7 @@ cluster:                         # research/25/26/27
   leiden:
     partition: RBConfiguration   # CPM — строка сравнения
     gamma: 1.0
-    gammas_sweep: [0.25, 0.5, 1.0, 1.5, 2.0]
+    gammas_sweep: [0.02, 0.029, 0.043, 0.063, 0.093, 0.136, 0.2, 0.293, 0.431, 0.632, 0.928, 1.36, 2.0]  # geomspace(0.02,2.0,13); плотность по PREREG_DEVIATIONS №6
     seeds_per_snapshot: 25       # одиночный прогон недопустим: seed-разброс ARI 0.44–0.73
   kmeans:
     ks: [4, 6, 8, 10, 12]
