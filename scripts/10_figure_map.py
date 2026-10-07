@@ -16,13 +16,14 @@ EPSG:4326). Без них точечная карта не читается ка
 в venv нет и ради одной фигуры не добавляются — GPKG это SQLite + WKB,
 парсится stdlib (sqlite3 + struct). Кольца децимируются страйдом до
 ≤RING_TARGET вершин — подложке хватает, PNG не раздувается. Полигоны
-нужны только ради силуэта: дыры-анклавы заливаются белым, границы МО
+нужны только ради силуэта: дыры-анклавы заливаются цветом подложки (белое
+на бумаге читалось бы как «нет данных»), границы МО
 не рисуются (на масштабе страны волосяные линии дают муар).
 
 242 МО с импутированными центрами (geo_island и пр.) не выделяются —
 по брифу показываются как обычные точки.
 
-Выходы (300 dpi, белый фон, без осей):
+Выходы (300 dpi, фон = бумага деки #FFFDF7, без осей):
   report/figures/F0_map.png       — герой слайда типов;
   report/figures/F0_map_mini.png  — мини-карта для титула
                                     (монохромная база + акценты K1/K2).
@@ -67,14 +68,18 @@ TYPE_NAMES = {
     1: "Сервисные городские ядра",
     2: "Северо-Запад",
 }
-ALPHA = {0: 0.70, 1: 0.90, 2: 0.90}
+ALPHA = {0: 0.60, 1: 0.90, 2: 0.90}
 ZORDER = {0: 1, 2: 2, 1: 3}  # периферия снизу, ядра сверху
 
-LAND_FACE = "#EBEFF1"        # подложка: холодный светло-серый, читается на белом
-LAND_FACE_MINI = "#E4E9EC"   # в мини карта мельче → подложку чуть плотнее
-RING_TARGET = 250            # макс. вершин на кольцо после децимации
+PAPER = "#FFFDF7"          # фон = панель деки (не чисто белый)
+LAND_FACE = "#EBEFF1"      # подложка: холодный светло-серый, читается на бумаге
+LAND_FACE_MINI = "#E4E9EC" # в мини карта мельче → подложку чуть плотнее
+INK = "#1D2530"
+MUTED = "#4C5361"
+FAINT = "#8B8FA0"
+RING_TARGET = 250          # макс. вершин на кольцо после децимации
 
-S_MAX = 380.0   # площадь маркера (pt²) для max pop (Москва, 1.63M)
+S_MAX = 280.0   # площадь маркера (pt²) для max pop (1.63M); cap против каши в ЕЧ
 S_MIN = 2.0     # пол того, чтобы малые МО не вырождались в пыль
 EDGE_ACCENT = {"edgecolors": "white", "linewidths": 0.25}  # отбивка акцентов в плотных кластерах
 
@@ -83,7 +88,10 @@ ALBERS_LAT1, ALBERS_LAT2 = 50.0, 70.0   # стандартные паралле�
 ALBERS_LON0 = 100.0                     # осевой меридиан, °E
 ALBERS_LAT0 = 60.0                      # параллель начала отсчёта, °N
 
-plt.rcParams.update({"font.family": "DejaVu Sans", "figure.dpi": 150})
+# Шрифт: DejaVu Sans (кириллица есть; системный PT Sans живёт в .ttc, который
+# matplotlib рисует молча пусто — не используем)
+plt.rcParams.update({"font.family": "DejaVu Sans",
+                     "figure.dpi": 150, "text.color": INK})
 
 log = logging.getLogger("figure_map")
 
@@ -206,7 +214,8 @@ def load_land() -> tuple[list[np.ndarray], list[np.ndarray], tuple[float, float,
 
 # ------------------------------------------------------------------ данные
 def load_points() -> pd.DataFrame:
-    nodes = pd.read_parquet(NODES, columns=["territory_id", "lat", "lon", "pop_2024"])
+    nodes = pd.read_parquet(NODES, columns=["territory_id", "lat", "lon",
+                                            "pop_2024", "name", "region_name"])
     labels = pd.read_parquet(LABELS, columns=["territory_id", "leiden_consensus"])
     df = nodes.merge(labels, on="territory_id", validate="one_to_one")
     if df[["lat", "lon", "pop_2024"]].isna().any().any():
@@ -224,7 +233,9 @@ def _draw_land(ax: plt.Axes, land, face: str, with_holes: bool) -> None:
     ax.add_collection(PolyCollection(exteriors, facecolors=face,
                                      edgecolors="none", zorder=0))
     if with_holes and holes:
-        ax.add_collection(PolyCollection(holes, facecolors="white",
+        # дыры-анклавы заливаем цветом земли, не белым: белое на бумаге
+        # читается как «нет данных», а это территория МО-оболочек
+        ax.add_collection(PolyCollection(holes, facecolors=face,
                                          edgecolors="none", zorder=0.1))
 
 
@@ -246,9 +257,47 @@ def _finish(ax: plt.Axes, bounds: tuple[float, float, float, float], pad_frac: f
     ax.axis("off")
 
 
+def _size_legend(ax: plt.Axes, pop_max: float) -> None:
+    """Референс-круги канала размера: площадь точки ∝ населению МО.
+
+    Line2D markersize — диаметр в pt, scatter s — площадь в pt²:
+    диаметр = 2·sqrt(s/π).
+    """
+    refs = [(100_000, "100 тыс."), (500_000, "500 тыс."), (1_500_000, "1,5 млн")]
+    handles = []
+    for pop, lab in refs:
+        s = max(pop / pop_max * S_MAX, S_MIN)
+        handles.append(Line2D([0], [0], marker="o", ls="none",
+                              markersize=2 * np.sqrt(s / np.pi),
+                              markerfacecolor="#C4C9CE", markeredgecolor=MUTED,
+                              markeredgewidth=0.6, label=lab))
+    leg = ax.legend(handles=handles, loc="lower right", frameon=False,
+                    fontsize=9.5, title="размер точки ∝ населению",
+                    title_fontsize=9.5, handletextpad=0.9, labelspacing=1.0,
+                    borderaxespad=0.2, labelcolor=INK)
+    leg.get_title().set_color(MUTED)
+    ax.add_artist(leg)
+
+
+def _annotate(ax: plt.Axes, df: pd.DataFrame, mask: pd.Series, text: str,
+              dx_pt: float, dy_pt: float, ha: str = "left") -> None:
+    """Выноска к крупнейшему (по населению) МО из маски; leader-line 0.5 pt."""
+    sub = df[mask]
+    if sub.empty:
+        log.warning("аннотация «%s»: узел не найден — пропущена", text)
+        return
+    row = sub.loc[sub["pop_2024"].idxmax()]
+    ax.annotate(text, xy=(row["x"], row["y"]), xytext=(dx_pt, dy_pt),
+                textcoords="offset points", fontsize=10, color=INK,
+                ha=ha, va="center",
+                arrowprops=dict(arrowstyle="-", color=MUTED, lw=0.5,
+                                shrinkA=2, shrinkB=3),
+                zorder=5)
+
+
 def render_main(df: pd.DataFrame, land) -> Path:
     fig, ax = plt.subplots(figsize=(12.0, 6.9))
-    fig.patch.set_facecolor("white")
+    fig.patch.set_facecolor(PAPER)
     if land is not None:
         _draw_land(ax, land, face=LAND_FACE, with_holes=True)
         bounds = land[2]
@@ -263,11 +312,29 @@ def render_main(df: pd.DataFrame, land) -> Path:
         handles.append(Line2D([0], [0], marker="o", ls="none", markersize=7,
                               markerfacecolor=COLORS[k], markeredgecolor="none",
                               label=f"{TYPE_NAMES[k]} · n={n}"))
-    ax.legend(handles=handles, loc="lower left", frameon=False, fontsize=10,
-              handletextpad=0.4, borderaxespad=0.2, labelcolor="#222222")
+    leg1 = ax.legend(handles=handles, loc="lower left", frameon=False,
+                     fontsize=10.5, handletextpad=0.4, borderaxespad=0.2,
+                     labelcolor=INK)
+    ax.add_artist(leg1)
+    _size_legend(ax, float(df["pop_2024"].max()))
+
+    _annotate(ax, df, df["region_name"] == "Москва", "Москва", 16, -30)
+    _annotate(ax, df, df["region_name"] == "Санкт-Петербург",
+              "Санкт-Петербург", 18, 14)
+    _annotate(ax, df, df["name"].str.contains("Азнакаев", case=False, na=False),
+              "Азнакаевский район", 14, 20)
+    _annotate(ax, df, df["region_name"] == "Калининградская область",
+              "Калининградская обл.", -10, -26, ha="right")
+
+    fig.text(0.005, 0.004,
+             "Данные: СберИндекс 2023–2024 · границы МО: ОКТМО "
+             "(t_dict_municipal_districts_poly.gpkg) · проекция: Альберса "
+             "50°/70°N, меридиан 100°E",
+             fontsize=7, color=FAINT, ha="left", va="bottom")
 
     out = FIG / "F0_map.png"
-    fig.savefig(out, dpi=300, facecolor="white", bbox_inches="tight", pad_inches=0.05)
+    fig.savefig(out, dpi=300, facecolor=PAPER, bbox_inches="tight",
+                pad_inches=0.05)
     plt.close(fig)
     return out
 
@@ -275,7 +342,7 @@ def render_main(df: pd.DataFrame, land) -> Path:
 def render_mini(df: pd.DataFrame, land) -> Path:
     """Монохромная база (все типы серым) + акценты K1/K2, без легенды."""
     fig, ax = plt.subplots(figsize=(4.4, 2.55))
-    fig.patch.set_facecolor("white")
+    fig.patch.set_facecolor(PAPER)
     if land is not None:
         _draw_land(ax, land, face=LAND_FACE_MINI, with_holes=False)
         bounds = land[2]
@@ -291,7 +358,7 @@ def render_mini(df: pd.DataFrame, land) -> Path:
     _finish(ax, bounds, pad_frac=0.03)
 
     out = FIG / "F0_map_mini.png"
-    fig.savefig(out, dpi=300, facecolor="white", bbox_inches="tight", pad_inches=0.02)
+    fig.savefig(out, dpi=300, facecolor=PAPER, bbox_inches="tight", pad_inches=0.02)
     plt.close(fig)
     return out
 

@@ -1,25 +1,62 @@
-/* Локальные шрифты деки (кириллица проверена 07.10.2026 через fontTools cmap) */
+/* Локальные шрифты деки — только файлы из этого каталога, без CDN.
+   Spectral (дисплей) + Golos Text (текст, variable 400–900) + PT Mono (моно).
+   PT Mono выбран вместо IBM Plex Mono: полное покрытие → ≤ ≥ − ₽ · × ±
+   (проверено по cmap 07.10.2026). PT Mono только 400 — жирный в моно
+   запрещён, иначе фолбэк в Courier.
+   Маппинг Spectral (по OS/2): spectral-0=400, spectral-2=300, spectral-4=500,
+   spectral-5=600, spectral-1=700, spectral-3=800. */
+
 @font-face {
-  font-family: 'Playfair Display';
+  font-family: 'Spectral';
+  font-style: normal;
+  font-weight: 300;
+  font-display: block;
+  src: url('spectral-2.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Spectral';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url('spectral-0.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Spectral';
+  font-style: normal;
+  font-weight: 500;
+  font-display: block;
+  src: url('spectral-4.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Spectral';
+  font-style: normal;
+  font-weight: 600;
+  font-display: block;
+  src: url('spectral-5.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Spectral';
+  font-style: normal;
+  font-weight: 700;
+  font-display: block;
+  src: url('spectral-1.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Spectral';
+  font-style: normal;
+  font-weight: 800;
+  font-display: block;
+  src: url('spectral-3.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'Golos Text';
   font-style: normal;
   font-weight: 400 900;
   font-display: block;
-  src: url('playfair-0.woff2') format('woff2');
+  src: url('golos-text-var.woff2') format('woff2');
 }
-@font-face {
-  font-family: 'Playfair Display';
-  font-style: italic;
-  font-weight: 400 900;
-  font-display: block;
-  src: url('playfair-1.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'Inter';
-  font-style: normal;
-  font-weight: 100 900;
-  font-display: block;
-  src: url('inter-var.woff2') format('woff2');
-}
+
 @font-face {
   font-family: 'PT Mono';
   font-style: normal;

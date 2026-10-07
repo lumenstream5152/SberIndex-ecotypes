@@ -29,6 +29,9 @@ convergence: ; uv run python scripts/07c_convergence.py $(ARGS)
 laglead:     ; uv run python scripts/07d_laglead.py $(ARGS) --out $(OUT)
 aux:         ; uv run python scripts/07e_publish_aux.py $(ARGS) --out $(OUT)
 report:      ; uv run python scripts/09_make_report.py $(ARGS)
+# Презентация собирается из соседнего каталога deck/ (HTML → PDF, локальные
+# шрифты, chrome-headless-shell) и кладётся в report/presentation.pdf.
+deck:        ; cd ../deck && node build.mjs && cp presentation.pdf ../sberindex-ecotypes/report/presentation.pdf
 # Лендинг (scripts/08_build_site.py, спека research/35) строится отдельно и в
 # reproduce не входит: это визуальный слой, не численный пайплайн.
 reproduce: data panel graphs cluster dynamics measures icvi icvi-null synth interpret drivers convergence laglead aux report

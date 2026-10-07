@@ -10,7 +10,7 @@
   --paper-2: #EFEAD9;      /* бумага тёмнее (панели) */
   --ink: #1D2530;          /* тушь */
   --ink-2: #4C5361;        /* вторичный текст */
-  --ink-3: #8B8FA0;        /* подписи/источники */
+  --ink-3: #646B78;        /* подписи/источники (было #8B8FA0 = 2.9:1, фейл WCAG AA) */
   --accent: #233C67;       /* индиго — вердикты, кикеры (вне данных) */
   --ochre: #B0730F;        /* warn/оговорки */
   --ok: #2F6B4F;           /* подтверждено */
@@ -139,6 +139,8 @@ table.swiss td {
   font-variant-numeric: tabular-nums;
 }
 table.swiss tr.best td { font-weight: 700; }
+/* PT Mono только 400: жирный в моно-ячейках = фолбэк в Courier. Запрещаем. */
+table.swiss tr.best td.num { font-weight: 400; color: var(--accent); }
 table.swiss tr.best td:first-child { box-shadow: inset 3px 0 0 var(--accent); }
 table.swiss td.num, table.swiss th.num { text-align: right; font-family: var(--font-mono); font-size: 11.5px; }
 table.swiss td .flag { color: var(--ochre); font-size: 10px; }
@@ -156,18 +158,18 @@ table.swiss td .flag { color: var(--ochre); font-size: 10px; }
 /* --- паспорт типа --- */
 .passport {
   border: 1.5px solid var(--ink); background: #FFFDF7;
-  padding: 10px 13px; display: flex; flex-direction: column; gap: 5px;
+  padding: 8px 12px; display: flex; flex-direction: column; gap: 4px;
 }
 .passport .phead { display: flex; align-items: baseline; gap: 9px;
-  border-bottom: 1px solid var(--hair); padding-bottom: 5px; }
+  border-bottom: 1px solid var(--hair); padding-bottom: 4px; }
 .passport .swatch { width: 12px; height: 12px; flex: none; transform: translateY(1px); }
-.passport .pname { font-family: var(--font-display); font-weight: 700; font-size: 17.5px; }
+.passport .pname { font-family: var(--font-display); font-weight: 700; font-size: 17px; }
 .passport .pscale { font-family: var(--font-mono); font-size: 10.5px; color: var(--ink-2); }
-.passport .prow { font-size: 12px; line-height: 1.34; }
+.passport .prow { font-size: 11.5px; line-height: 1.32; }
 .passport .prow b { font-weight: 650; }
 .passport .caveat {
-  font-size: 11px; color: var(--ink-2); border-top: 1px dashed var(--hair);
-  padding-top: 5px; font-style: italic;
+  font-size: 10.5px; color: var(--ink-2); border-top: 1px dashed var(--hair);
+  padding-top: 4px; font-style: italic;
 }
 
 /* --- честный негатив (карточка оговорки) --- */
@@ -194,11 +196,11 @@ table.swiss td .flag { color: var(--ochre); font-size: 10px; }
 }
 .title-main {
   font-family: var(--font-display); font-weight: 700;
-  font-size: 54px; line-height: 1.08; max-width: 740px;
+  font-size: 54px; line-height: 1.08; max-width: 640px;
 }
 .title-sub {
   margin-top: 16px; font-size: 16.5px; line-height: 1.5; color: var(--ink-2);
-  max-width: 760px;
+  max-width: 640px;
 }
 .title-sub b { color: var(--ink); }
 .title-meta {
@@ -208,8 +210,20 @@ table.swiss td .flag { color: var(--ochre); font-size: 10px; }
   letter-spacing: 0.05em;
 }
 .title-hero {
-  position: absolute; right: 40px; top: 130px; width: 400px; z-index: 1;
+  position: absolute; right: 30px; top: 88px; width: 480px; z-index: 1;
 }
+
+/* --- разрядка редких листов (5, 11, 12): крупнее шаг, не «недоделано» --- */
+.slide.roomy .bullets { gap: 14px; }
+.slide.roomy .bullet { font-size: 15.5px; line-height: 1.5; }
+.slide.roomy .bignum .v { font-size: 40px; }
+.slide.roomy .bignum .k { font-size: 13px; max-width: 240px; }
+.slide.roomy .verdict-strip { font-size: 16.5px; }
+
+/* --- схема правила рёбер (лист 5): ручной SVG, жёсткая геометрия --- */
+.scheme { background: #FFFDF7; border: 1px solid var(--hair); padding: 10px 12px 6px; }
+.scheme svg { display: block; width: 100%; height: auto; }
+.scheme .ptitle { margin-bottom: 2px; }
 
 @page { size: 1280px 720px; margin: 0; }
 @media print { html, body { margin: 0; padding: 0; } }

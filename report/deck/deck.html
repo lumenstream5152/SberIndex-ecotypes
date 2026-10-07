@@ -93,7 +93,7 @@
   <div class="headline">Сырые корреляции рядов вырождены инфляцией (r = 0,91) — сходство считаем по остаткам</div>
   <div class="standfirst">Все ряды растут вместе с ценами: медианная корреляция сырых приростов 0,906 по 2 031 120 парам — сеть из них тривиальна. После кросс-секционного демеанинга по месяцу медиана −0,006.</div>
   <div class="body">
-    <div class="col" style="flex:1.3">
+    <div class="col" style="flex:1.15">
       <div class="bullets">
         <div class="bullet">Значения — <b>рубли на жителя в месяц</b> (per-capita из источника; население второй раз не делим).</div>
         <div class="bullet">6 категорий → <b>CLR-координаты</b> (Аитчисон); нулей нет, псевдосчётчики не нужны. «Прочее» = 1−Σ5, медиана 28% — сигнал, не мусор.</div>
@@ -101,13 +101,13 @@
         <div class="bullet">Преемники муниципальных реформ <b>не склеиваем</b> — ряд = формальная территория.</div>
         <div class="bullet warn">Дамп обрывается 2024-12: <b>2025-го на уровне МО не существует</b> — out-of-time нигде не обещаем.</div>
       </div>
-      <div class="panel" style="flex:1;min-height:0"><div class="ptitle">Распределение попарных корреляций приростов (выборка 40 тыс. пар)</div><img src="assets/fig/F11_demean.png" alt=""></div>
       <div class="verdict-strip"><span class="lbl">Вывод</span>Данные ограничивают выводы — и это написано раньше выводов (предрегистрация, тег prereg-v1).</div>
     </div>
-    <div class="side col">
-      <div class="bignums">
+    <div class="col" style="flex:1">
+      <div class="panel" style="flex:1;min-height:0"><div class="ptitle">Распределение попарных корреляций приростов (выборка 40 тыс. пар)</div><img src="assets/fig/F11_demean.png" alt=""></div>
+      <div class="bignums" style="justify-content:space-between">
         <div class="bignum"><span class="v">48 384</span><span class="k">строки панели (2 016 МО × 24 мес)</span></div>
-        <div class="bignum"><span class="v">0,906 → <em>−0,006</em></span><span class="k">медиана корреляции приростов до / после демеанинга</span></div>
+        <div class="bignum"><span class="v">0,906 → <em>−0,006</em></span><span class="k">медиана корреляции до / после демеанинга</span></div>
         <div class="bignum"><span class="v">174</span><span class="k">неполных ряда исключены (реестр публикуется)</span></div>
       </div>
     </div>
@@ -116,17 +116,47 @@
 </section>
 
 <!-- ============ ЛИСТ 5 · СЕТЬ ============ -->
-<section class="slide">
+<section class="slide roomy">
   <div class="kicker"><span>Построение сети</span><span class="folio">ЛИСТ 5 / 12</span></div>
   <div class="headline">Правило рёбер — формальное и проверяемое: 12 900 рёбер, ноль изолятов, одна компонента</div>
   <div class="standfirst">W = корреляции демеаненных остатков; каркас E* = kNN(10, union) ∩ BH-FDR(q=0,05) ∪ топ-3 safety net; гео-слой w = exp(−d/150 км) по автодорогам. Месячная перестройка топологии — шум (Jaccard половин 0,031) → один edge-set, 24 вектора весов.</div>
   <div class="body">
     <div class="col" style="flex:1.25">
+      <div class="scheme">
+        <div class="ptitle">Как строится ребро — четыре шага, каждый проверяем</div>
+        <svg viewBox="0 0 700 132" xmlns="http://www.w3.org/2000/svg">
+          <g font-family="Golos Text" font-size="12.5" fill="#1D2530">
+            <rect x="0" y="18" width="150" height="56" fill="#FFFDF7" stroke="#1D2530" stroke-width="1.2"/>
+            <text x="12" y="40" font-weight="600">Остатки приростов</text>
+            <text x="12" y="58" fill="#4C5361">демеанинг + CLR</text>
+            <rect x="183" y="18" width="150" height="56" fill="#FFFDF7" stroke="#1D2530" stroke-width="1.2"/>
+            <text x="195" y="40" font-weight="600">Сходство рядов</text>
+            <text x="195" y="58" fill="#4C5361">корреляция остатков</text>
+            <rect x="366" y="18" width="150" height="56" fill="#FFFDF7" stroke="#1D2530" stroke-width="1.2"/>
+            <text x="378" y="40" font-weight="600">Каркас кандидатов</text>
+            <text x="378" y="58" fill="#4C5361">kNN(10) ∪ топ-3 safety</text>
+            <rect x="549" y="18" width="151" height="56" fill="#233C67" stroke="#233C67" stroke-width="1.2"/>
+            <text x="561" y="40" font-weight="600" fill="#FFFDF7">Фильтр BH-FDR</text>
+            <text x="561" y="58" fill="#D9D2BE">q = 0,05 · 2 031 120 пар</text>
+          </g>
+          <g stroke="#1D2530" stroke-width="1.5" fill="none">
+            <line x1="150" y1="46" x2="178" y2="46"/><path d="M178 41 L186 46 L178 51 Z" fill="#1D2530" stroke="none"/>
+            <line x1="333" y1="46" x2="361" y2="46"/><path d="M361 41 L369 46 L361 51 Z" fill="#1D2530" stroke="none"/>
+            <line x1="516" y1="46" x2="544" y2="46"/><path d="M544 41 L552 46 L544 51 Z" fill="#1D2530" stroke="none"/>
+          </g>
+          <g font-family="PT Mono" font-size="11" fill="#4C5361">
+            <text x="0" y="102">2 016 МО × 24 мес</text>
+            <text x="183" y="102">W в [−1, 1], по месяцам</text>
+            <text x="366" y="102">12 759 + 141 safety</text>
+            <text x="549" y="102" fill="#233C67" font-weight="700">E* = 12 900 · 0 изолятов</text>
+          </g>
+          <text x="0" y="124" font-family="PT Mono" font-size="10" fill="#646B78">гео-слой отдельно: w = exp(−d/150 км) по автодорогам · 10 «островов» — great-circle fallback с флагом</text>
+        </svg>
+      </div>
       <div class="bullets">
         <div class="bullet"><b>11 мер сходства + 3 анти-примера</b> прогнаны через предрегистрированный гейт (стабильность к пертурбациям рёбер).</div>
         <div class="bullet"><b>Learned-граф (обучаемый, M11) провалил гейт</b>: bootstrap-Jaccard 0,235, хаб-коллапс (max степень 2015 из 2016). Сложность не купила топологию.</div>
         <div class="bullet">Лаговые корреляции и DTW в бенчмарке (M4/M6/M7) — полная ширина критерия, не одно правило.</div>
-        <div class="bullet">Гео-слой отделён от similarity-слоя (маски рёбер публикуются); 10 МО-«островов» — great-circle fallback с флагом.</div>
       </div>
       <div class="verdict-strip"><span class="lbl">Вывод</span>Сеть проста по правилу и строга по фильтру — каждое ребро объяснимо и перепроверяемо.</div>
     </div>
@@ -213,7 +243,7 @@
 <section class="slide">
   <div class="kicker"><span>Переходы поимённо · Интерпретация</span><span class="folio">ЛИСТ 9 / 12</span></div>
   <div class="headline">У каждого перехода — имя и сдвиг профиля; ассоциация, не пророчество</div>
-  <div class="standfirst">177 карточек переходов с драйверами в сырых единицах (TreeSHAP) + event-study ±6 мес против matched-контроля: соседский состав съезжается к событию (ассоциация). Предсказуемость — отдельный вопрос, и ответ честный: лист 10.</div>
+  <div class="standfirst">177 карточек переходов с драйверами в сырых единицах (TreeSHAP) + event-study ±6 мес против matched-контроля: профиль переходчиков сближается с контролем за 2–3 месяца до события, после — разрыв не закрывается (n=177, различия внутри 95% CI — ассоциация, не причинность). Предсказуемость — отдельный вопрос, и ответ честный: лист 10.</div>
   <div class="body">
     <div class="hero panel"><div class="ptitle">Event-study: профиль до/после перехода (matched-контроль)</div><img src="assets/fig/F6_event_study.png" alt=""></div>
     <div class="side col">
@@ -248,7 +278,7 @@
 </section>
 
 <!-- ============ ЛИСТ 11 · КЛУБЫ + ЛАГ-ЛИДЕРСТВО ============ -->
-<section class="slide">
+<section class="slide roomy">
   <div class="kicker"><span>Сходимость · Лаг-лидерство</span><span class="folio">ЛИСТ 11 / 12</span></div>
   <div class="headline">Вся Россия сходится в один клуб по маркетплейсам — и остаётся тремя типами</div>
   <div class="standfirst">Клубы сходимости Phillips–Sul (свой порт log-t, HAC): маркетплейсы+продовольствие — один глобальный клуб по всем 3 критериям (log-t t=+0,18 > −1,65; σ t=−12,5; β t=−43,2). Клубы ортогональны типам (ARI ≤ 0,06): сходимость идёт внутри типов, не стирая их.</div>
@@ -274,7 +304,7 @@
 </section>
 
 <!-- ============ ЛИСТ 12 · ОГРАНИЧЕНИЯ + ВОСПРОИЗВОДИМОСТЬ ============ -->
-<section class="slide">
+<section class="slide roomy">
   <div class="kicker"><span>Ограничения · Воспроизводимость</span><span class="folio">ЛИСТ 12 / 12</span></div>
   <div class="headline">Семь ограничений названы до ваших вопросов — каждое число воспроизводимо одной командой</div>
   <div class="standfirst">Ограничения: окно 24 мес; нет 2025 на уровне МО; k=3 — потолок стабильности (подтипы с пометкой); гейт 23/23 — динамика только узловая; безналичное ≠ все расходы; драйверы умеренны; 174 МО исключены + 10 островов на fallback; гео-шкала λ=150 км не пертурбирована (записано в долг честно).</div>
