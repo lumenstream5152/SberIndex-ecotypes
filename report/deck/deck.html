@@ -10,7 +10,7 @@
 
 <!-- ============ ЛИСТ 1 · ТИТУЛ ============ -->
 <section class="slide title">
-  <img class="title-hero" src="assets/fig/F0_map_mini.png" alt="">
+  <img class="title-hero" style="width: 530px; top: 84px; right: 26px;" src="assets/fig/F0_map_mini.png" alt="">
   <div class="title-inner">
     <div class="title-kicker">СберИндекс 2026 · Кластеризация · Конкурсная работа</div>
     <div class="title-main">Три потребительских типа России: структура сверхинертна, переходы редки — и доказуемы</div>
@@ -122,7 +122,7 @@
   <div class="headline">Правило рёбер — формальное и проверяемое: 12 900 рёбер, ноль изолятов, одна компонента</div>
   <div class="standfirst">W = корреляции демеаненных остатков; каркас E* = kNN(10, union) ∩ BH-FDR(q=0,05) ∪ топ-3 safety net; гео-слой w = exp(−d/150 км) по автодорогам. Месячная перестройка топологии — шум (Jaccard половин 0,031) → один edge-set, 24 вектора весов.</div>
   <div class="body">
-    <div class="col" style="flex:1.25">
+    <div class="col" style="flex:1">
       <div class="scheme">
         <div class="ptitle">Как строится ребро — четыре шага, каждый проверяем</div>
         <svg viewBox="0 0 700 132" xmlns="http://www.w3.org/2000/svg">
@@ -161,13 +161,7 @@
         <div class="bullet"><b>Сеть проста по правилу и строга по фильтру</b> — каждое ребро объяснимо и перепроверяемо.</div>
       </div>
     </div>
-    <div class="side col">
-      <div class="bignums">
-        <div class="bignum"><span class="v">12 900</span><span class="k">рёбер каркаса E* (12 759 после FDR + 141 safety)</span></div>
-        <div class="bignum"><span class="v">0,235</span><span class="k">bootJ learned-графа — единственный провал гейта из 11 мер</span></div>
-        <div class="bignum"><span class="v">0,954</span><span class="k">корреляция месячных векторов весов (структура стабильна)</span></div>
-      </div>
-    </div>
+
   </div>
   <div class="srcnote"><span>outputs/main/table_A_gate.parquet · table_topology.parquet · src/ecotypes/graphs.py</span><span>критерий: сеть 15%</span></div>
 </section>
@@ -297,10 +291,18 @@
       </div>
     </div>
     <div class="side col">
-      <div class="bignums" style="flex-direction:column; gap:44px; justify-content:center; flex:1">
-        <div class="bignum"><span class="v">1 клуб</span><span class="k">маркетплейсы+продовольствие, 3/3 критерия Phillips–Sul</span></div>
-        <div class="bignum"><span class="v">4 437</span><span class="k">направленных рёбер лаг-лидерства (FDR 5%)</span></div>
-        <div class="bignum"><span class="v">ARI ≤ 0,06</span><span class="k">клубы × типы — ортогональны</span></div>
+      <div class="panel">
+        <div class="ptitle">Топ-«маяки» поимённо · исходящая степень в графе лидерства</div>
+        <table class="swiss">
+          <tr><th>муниципалитет</th><th>регион</th><th class="num">out-deg</th></tr>
+          <tr><td>Тазовский р-н</td><td>ЯНАО</td><td class="num">87</td></tr>
+          <tr><td>Кочковский р-н</td><td>Новосибирская обл.</td><td class="num">85</td></tr>
+          <tr><td>Сургутский р-н</td><td>ХМАО — Югра</td><td class="num">49</td></tr>
+          <tr><td>Новоселицкий м.о.</td><td>Ставропольский край</td><td class="num">32</td></tr>
+          <tr><td>г.о. Буй</td><td>Костромская обл.</td><td class="num">29</td></tr>
+          <tr><td>Абанский р-н</td><td>Красноярский край</td><td class="num">26</td></tr>
+        </table>
+        <div style="font-size:11px; color:var(--ink-2); margin-top:8px; line-height:1.4;">Маяки — преимущественно периферия (средний out-deg типа 0 = 2,52 против 0,31 у ядер): сигнал идёт не из столиц. <b>1 клуб</b> сходимости по маркетплейсам+продовольствию (3/3 критерия); клубы ортогональны типам (ARI ≤ 0,06).</div>
       </div>
     </div>
   </div>
