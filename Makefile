@@ -10,8 +10,8 @@ export OMP_NUM_THREADS=1
 export OPENBLAS_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 
-.PHONY: env data panel graphs cluster dynamics measures icvi synth interpret \
-        drivers convergence laglead report reproduce smoke test
+.PHONY: env data panel graphs cluster dynamics measures icvi icvi-null synth \
+        interpret drivers convergence laglead aux report reproduce smoke test
 
 env:         ; uv sync --locked && uv run python -c "import ecotypes; print('env ok')"
 data:        ; uv run python scripts/01_download_data.py
@@ -21,15 +21,17 @@ cluster:     ; uv run python scripts/04_cluster.py $(ARGS) --out $(OUT)
 dynamics:    ; uv run python scripts/05_dynamics.py $(ARGS) --out $(OUT)
 measures:    ; uv run python scripts/06a_measures.py $(ARGS) --out $(OUT)
 icvi:        ; uv run python scripts/06_icvi_compare.py $(ARGS) --out $(OUT)
+icvi-null:   ; uv run python scripts/06c_icvi_null.py $(ARGS) --out $(OUT)
 synth:       ; uv run python scripts/06b_synth_grid.py $(ARGS)
 interpret:   ; uv run python scripts/07_interpret.py $(ARGS) --out $(OUT)
 drivers:     ; uv run python scripts/07b_drivers.py $(ARGS) --out $(OUT)
 convergence: ; uv run python scripts/07c_convergence.py $(ARGS)
 laglead:     ; uv run python scripts/07d_laglead.py $(ARGS) --out $(OUT)
+aux:         ; uv run python scripts/07e_publish_aux.py $(ARGS) --out $(OUT)
 report:      ; uv run python scripts/09_make_report.py $(ARGS)
 # Лендинг (scripts/08_build_site.py, спека research/35) строится отдельно и в
 # reproduce не входит: это визуальный слой, не численный пайплайн.
-reproduce: data panel graphs cluster dynamics measures icvi synth interpret drivers convergence laglead report
+reproduce: data panel graphs cluster dynamics measures icvi icvi-null synth interpret drivers convergence laglead aux report
 # smoke: полный пайплайн на подвыборке 200 МО, отдельный выходной каталог — полные артефакты не затираются
 smoke:     ; $(MAKE) reproduce OVERRIDES=configs/smoke.yaml OUT=data/processed_smoke
 test:      ; uv run pytest -q

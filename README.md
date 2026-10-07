@@ -4,13 +4,34 @@
 атрибутированная сеть 2016 муниципальных образований × 24 месяца, кластеры,
 их эволюция и интерпретация. Полная воспроизводимость одной командой.
 
-![ci](https://github.com/OWNER/sberindex-ecotypes/actions/workflows/ci.yml/badge.svg)
-
 ## Главный результат
 
-Воспроизводится командами ниже; итоговые таблицы — `outputs/main/`
-(метод × ICVI × NMI на синтетике; паспорта типов). Предрегистрация
-экспериментальных решений: [PREREG.md](PREREG.md) (тег `prereg-v1`).
+- **Типология**: 3 макро-типа (γ*=0.293, плато-правило по стабильности;
+  медиана попарного seed-ARI 0.931) + подтиповый слой с пометкой пониженной
+  стабильности. Бюджетного плато 4–10 типов в данных нет (плотная γ-сетка).
+- **Сверхинертность**: помесячные перестройки типологии внутри шумового
+  конверта (ARI соседних месяцев 0.876 против нуля 0.655, гейт 23/23) —
+  публикуется как доказанный факт устойчивости; переходы допускаются узловым
+  скрином: 177 доказуемых событий из 1363 (q75-порог не подогнан).
+- **Бенчмарк мер**: победитель M3 (композит 0.398, отрыв ≥ 1 SE), но плато на
+  M3 вырождается в k=1 → прод-типология на M2: «лучшая мера ≠ лучшая опора
+  типологии» (находка). ICVI все 6 штук, сверены с Pattern до 1e-16;
+  перестановочный нуль (200 reps): SW z=5.4, CH/n z=453, AVI z=174, MQ z=263.
+- **Интерпретация**: Энгель-градиент (45.9→36.1→33.3% еды против 48→87→114k
+  зарплаты); «Россия-1» Зубаревич раскалывается на два типа (lift 5.46/4.40);
+  моногорода не выделяются (lift 1.14 — честный негатив); клубы сходимости
+  Phillips–Sul (маркетплейсы: один глобальный клуб); лаг-лидерство — 4437
+  направленных рёбер (phase-randomization + BH-FDR).
+- **Драйверы переходов**: честный негатив по критерию простоты — публикуется
+  margin-rank (h=3 PR-AUC 0.062 у LGBM против 0.0445 у базлайна; оба числа в
+  `model_metrics.json`, вердикт с обоснованием там же).
+
+Итоговые таблицы — `outputs/main/` (индекс «артефакт → команда → run» —
+в `outputs/main/README.md`, словарь колонок — `DATA_DICTIONARY.md`).
+Предрегистрация: [PREREG.md](PREREG.md) (тег `prereg-v1`), журнал отклонений —
+[PREREG_DEVIATIONS.md](PREREG_DEVIATIONS.md) (13 записей, включая реестр
+расхождений, найденных независимым аудитом). Методологический отчёт —
+[report/methodology.md](report/methodology.md) (генерируется `make report`).
 
 ## Quickstart
 
@@ -24,21 +45,26 @@ make reproduce          # полный прогон (часы CPU)
 ## Структура
 
 ```
-configs/    default.yaml (все гиперпараметры), smoke.yaml, prereg.yaml
-src/ecotypes/  пакет: panel, graphs, cluster, dynamics, icvi, synthetic, interpret, site
-scripts/    01_download_data … 09_make_report — тонкие раннеры
-tests/      pytest: контракты данных, инварианты, детерминизм, smoke
+configs/    default.yaml (все гиперпараметры), smoke.yaml, prereg.yaml,
+            interpretability_rubric.yaml, type_names_draft.yaml
+src/ecotypes/  пакет: panel, graphs, cluster, dynamics, measures, icvi,
+            benchmark, synthetic, interpret, drivers, logt, laglead
+scripts/    01_download_data … 09_make_report — тонкие раннеры (12 штук,
+            все в make-шине; 08_build_site — лендинг, строится отдельно)
+tests/      pytest: 158 тестов (контракты, инварианты, детерминизм, smoke)
 outputs/main/  итоговые таблицы (в git)
-report/     методологический отчёт (рус.)
-site/       интерактивный лендинг (single-file)
+report/     методологический отчёт + фигуры (генерируется make report)
 ```
 
 ## Результат → артефакт → команда
 
-(таблица заполняется по мере прогонов; каждая строка — `make <таргет>`)
+Полная таблица — [`outputs/main/README.md`](outputs/main/README.md)
+(31 артефакт, каждый с командой и run id). Ядро цепочки:
+`make data panel graphs cluster dynamics measures icvi icvi-null synth
+interpret drivers convergence laglead aux report` = `make reproduce`.
 
 ## Данные и лицензии
 
 Код — MIT. Данные СберИндекса и производные таблицы — CC BY-SA 4.0,
-источники и хэши: [DATA.md](DATA.md). GPL-3 зависимости: [NOTICE](NOTICE).
+источники и хэши: [DATA.md](DATA.md). GPL-зависимости: [NOTICE](NOTICE).
 Конкурс СберИндекс 2026, направление «Кластеризация».

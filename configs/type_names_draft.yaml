@@ -51,12 +51,12 @@ macro:
         verdict: false
         reason: prevalence=0.40 (нужно ≥0.6), lift=1.20 (нужно ≥2.0)
       - name: Моногородской профиль
-        prevalence: 0.109
+        prevalence: 0.107
         lift: 1.14
         external_lift: 1.14
-        external_coverage: 0.938
+        external_coverage: 0.932
         verdict: false
-        reason: 'внешний факт слаб: lift=1.14, покрытие списка=94%'
+        reason: 'внешний факт слаб: lift=1.14, покрытие списка=93%'
       note: 'имя не присвоено: ни один кандидат не прошёл фильтры — остаётся «тип
         K0»'
     '1':
@@ -160,12 +160,12 @@ macro:
         verdict: false
         reason: prevalence=0.04 (нужно ≥0.6), lift=0.13 (нужно ≥2.0)
       - name: Моногородской профиль
-        prevalence: 0.072
-        lift: 0.76
-        external_lift: 0.76
-        external_coverage: 0.062
+        prevalence: 0.078
+        lift: 0.83
+        external_lift: 0.83
+        external_coverage: 0.068
         verdict: false
-        reason: 'внешний факт слаб: lift=0.76, покрытие списка=6%'
+        reason: 'внешний факт слаб: lift=0.83, покрытие списка=7%'
       note: 'имя не присвоено: ни один кандидат не прошёл фильтры — остаётся «тип
         K2»'
 subtypes:
@@ -221,12 +221,12 @@ subtypes:
         verdict: false
         reason: prevalence=0.31 (нужно ≥0.6), lift=0.94 (нужно ≥2.0)
       - name: Моногородской профиль
-        prevalence: 0.088
-        lift: 0.92
-        external_lift: 0.92
-        external_coverage: 0.266
+        prevalence: 0.086
+        lift: 0.91
+        external_lift: 0.91
+        external_coverage: 0.263
         verdict: false
-        reason: 'внешний факт слаб: lift=0.92, покрытие списка=27%'
+        reason: 'внешний факт слаб: lift=0.91, покрытие списка=26%'
       note: 'имя не присвоено: ни один кандидат не прошёл фильтры — остаётся «тип
         K0»'
     '1':
@@ -276,12 +276,12 @@ subtypes:
         verdict: false
         reason: prevalence=0.43 (нужно ≥0.6), lift=1.30 (нужно ≥2.0)
       - name: Моногородской профиль
-        prevalence: 0.049
-        lift: 0.52
-        external_lift: 0.52
-        external_coverage: 0.141
+        prevalence: 0.051
+        lift: 0.54
+        external_lift: 0.54
+        external_coverage: 0.147
         verdict: false
-        reason: 'внешний факт слаб: lift=0.52, покрытие списка=14%'
+        reason: 'внешний факт слаб: lift=0.54, покрытие списка=15%'
       note: 'имя не присвоено: ни один кандидат не прошёл фильтры — остаётся «тип
         K1»'
     '2':
@@ -331,12 +331,12 @@ subtypes:
         verdict: false
         reason: prevalence=0.58 (нужно ≥0.6), lift=1.75 (нужно ≥2.0)
       - name: Моногородской профиль
-        prevalence: 0.153
-        lift: 1.61
-        external_lift: 1.61
-        external_coverage: 0.302
+        prevalence: 0.145
+        lift: 1.54
+        external_lift: 1.54
+        external_coverage: 0.289
         verdict: false
-        reason: 'внешний факт слаб: lift=1.61, покрытие списка=30%'
+        reason: 'внешний факт слаб: lift=1.54, покрытие списка=29%'
       note: 'имя не присвоено: ни один кандидат не прошёл фильтры — остаётся «тип
         K2»'
     '3':
@@ -386,12 +386,12 @@ subtypes:
         verdict: false
         reason: prevalence=0.05 (нужно ≥0.6), lift=0.14 (нужно ≥2.0)
       - name: Моногородской профиль
-        prevalence: 0.089
-        lift: 0.94
-        external_lift: 0.94
-        external_coverage: 0.089
+        prevalence: 0.095
+        lift: 1.01
+        external_lift: 1.01
+        external_coverage: 0.095
         verdict: false
-        reason: 'внешний факт слаб: lift=0.94, покрытие списка=9%'
+        reason: 'внешний факт слаб: lift=1.01, покрытие списка=9%'
       note: 'имя не присвоено: ни один кандидат не прошёл фильтры — остаётся «тип
         K3»'
     '6':
@@ -442,11 +442,11 @@ subtypes:
         reason: prevalence=0.19 (нужно ≥0.6), lift=0.57 (нужно ≥2.0)
       - name: Моногородской профиль
         prevalence: 0.31
-        lift: 3.26
-        external_lift: 3.26
-        external_coverage: 0.188
+        lift: 3.29
+        external_lift: 3.29
+        external_coverage: 0.189
         verdict: false
-        reason: 'внешний факт слаб: lift=3.26, покрытие списка=19%'
+        reason: 'внешний факт слаб: lift=3.29, покрытие списка=19%'
       note: 'имя не присвоено: ни один кандидат не прошёл фильтры — остаётся «тип
         K6»'
     '7':
@@ -497,9 +497,9 @@ subtypes:
         reason: prevalence=0.01 (нужно ≥0.6), lift=0.04 (нужно ≥2.0)
       - name: Моногородской профиль
         prevalence: 0.015
-        lift: 0.15
-        external_lift: 0.15
+        lift: 0.16
+        external_lift: 0.16
         external_coverage: 0.016
         verdict: false
-        reason: 'внешний факт слаб: lift=0.15, покрытие списка=2%'
+        reason: 'внешний факт слаб: lift=0.16, покрытие списка=2%'
       note: null

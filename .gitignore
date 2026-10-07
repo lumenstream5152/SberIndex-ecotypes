@@ -3,7 +3,7 @@ __pycache__/
 .venv/
 .uv/
 data/raw/
-data/external/
+# data/external/ — коммитим: малые валидационные файлы (моногорода, курорты, Росстат БД ПМО), ~27 МБ, нужны make interpret/panel на чистом клоне
 data/interim/
 data/processed/
 outputs/*
