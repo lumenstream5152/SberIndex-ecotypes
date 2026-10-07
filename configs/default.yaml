@@ -58,7 +58,7 @@ icvi:                            # research/32 (формулы сверены с
   panel: [SW, CH_over_N, S_Dbw, AVI, AVU, MQ]
   mq_variant: mancoridis         # первичный Mancoridis 1998; TurboMQ — абляция (механически растёт с K)
   sdbw_alg_noise: bind
-  random_z_runs: 100             # перестановки меток для baseline-нормализации
+  random_z_runs: 200             # перестановки меток; фактический ICVI-нуль — N_PERM=200 в scripts/06c_icvi_null.py (это поле — декларативный дубль)
 
 synthetic:                       # research/28 (калибровка по реальным данным 04.10.2026)
   replicas: 15

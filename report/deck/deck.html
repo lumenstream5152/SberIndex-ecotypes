@@ -194,7 +194,7 @@
 <section class="slide">
   <div class="kicker"><span>Сравнение методов · ICVI</span><span class="folio">ЛИСТ 7 / 12</span></div>
   <div class="headline">Плато-правило вместо «локтя»: стабилен только макро-уровень k = 3 — при γ из предрегистрации</div>
-  <div class="standfirst">10 методов 4 парадигм × полная панель ICVI (SW, CH/N, S_Dbw, AVI, AVU, MQ-Mancoridis; сверены с Pattern до 1e-16). Победитель композита — spectral_knn; прод — Leiden-консенсус (единственный с авто-k и плато-стабильностью). Обе версии композита публикуются.</div>
+  <div class="standfirst">9 методов 4 парадигм × полная панель ICVI (SW, CH/N, S_Dbw, AVI, AVU, MQ-Mancoridis; сверены с Pattern до 1e-16). Победитель композита — spectral_knn; прод — Leiden-консенсус (единственный с авто-k и плато-стабильностью). Обе версии композита публикуются.</div>
   <div class="body">
     <div class="hero col">
       <div class="panel" style="flex:1.6"><div class="ptitle">Плато-гейт: seed-ARI по γ (25 seeds)</div><img src="assets/fig/F1_plateau.png" alt=""></div>
@@ -212,7 +212,7 @@
       <div class="bullets">
         <div class="bullet">Одиночный Leiden недопустим (seed ARI 0,44–0,73) → <b>консенсус CSPA из 25 прогонов</b>; на γ* ARI med 0,93.</div>
         <div class="bullet">ICVI прод-типологии против 200 перестановок меток: SW z=5,4 (p &lt; 0,005); CH/n z=453; S_Dbw z=−20; AVI z=174; MQ z=263 — все percentile = 1.000.</div>
-        <div class="bullet">k-means почти догоняет консенсус по стабильности (0,9136 vs 0,9178) при 110× скорости — платим за авто-k и сетевую чистоту, не за стабильность.</div>
+        <div class="bullet">k-means почти догоняет консенсус по стабильности (0,9136 vs 0,9178) при 110× скорости. Но k-means не выбирает k — плато-правило прогоняется на консенсусе, и k-means наследует найденный k=3; авто-k и сетевую чистоту (MQ) даёт только консенсус.</div>
       </div>
       <div class="honest"><span class="lbl">Честные оговорки</span>AVU: нуль почти вырожден при n≈2000 (null_std ≈ 2e-16) — z=0,47 только с разбросом рядом. Циркулярные пары помечены в таблице: MQ/Q роднятся с community-методами, SW/CH — с k-means.</div>
     </div>
