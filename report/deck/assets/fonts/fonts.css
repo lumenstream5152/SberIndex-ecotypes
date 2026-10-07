@@ -1,0 +1,29 @@
+/* Локальные шрифты деки (кириллица проверена 07.10.2026 через fontTools cmap) */
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: block;
+  src: url('playfair-0.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Playfair Display';
+  font-style: italic;
+  font-weight: 400 900;
+  font-display: block;
+  src: url('playfair-1.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 100 900;
+  font-display: block;
+  src: url('inter-var.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'PT Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url('pt-mono.woff2') format('woff2');
+}
