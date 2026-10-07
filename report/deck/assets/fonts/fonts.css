@@ -1,54 +1,71 @@
-/* Локальные шрифты деки — только файлы из этого каталога, без CDN.
-   Spectral (дисплей) + Golos Text (текст, variable 400–900) + PT Mono (моно).
-   PT Mono выбран вместо IBM Plex Mono: полное покрытие → ≤ ≥ − ₽ · × ±
-   (проверено по cmap 07.10.2026). PT Mono только 400 — жирный в моно
-   запрещён, иначе фолбэк в Courier.
-   Маппинг Spectral (по OS/2): spectral-0=400, spectral-2=300, spectral-4=500,
-   spectral-5=600, spectral-1=700, spectral-3=800. */
-
+/* Локальные шрифты деки v2 «Полевой атлас»: IBM Plex Serif (дисплей,
+   НЕ Spectral — та в сканере AI-дефолтов) + Golos Text (тело) + PT Mono.
+   Plex Serif сабсеты лишены → ≤ ≥ ₽ — в заголовках эти символы не живут;
+   стек 'IBM Plex Serif','Golos Text' страхует на будущее. */
 @font-face {
-  font-family: 'Spectral';
-  font-style: normal;
-  font-weight: 300;
-  font-display: block;
-  src: url('spectral-2.woff2') format('woff2');
-}
-@font-face {
-  font-family: 'Spectral';
+  font-family: 'IBM Plex Serif';
   font-style: normal;
   font-weight: 400;
   font-display: block;
-  src: url('spectral-0.woff2') format('woff2');
+  src: url('plex-serif-400-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+2000-206F, U+20AC, U+2191, U+2193, U+2212;
 }
 @font-face {
-  font-family: 'Spectral';
+  font-family: 'IBM Plex Serif';
   font-style: normal;
-  font-weight: 500;
+  font-weight: 400;
   font-display: block;
-  src: url('spectral-4.woff2') format('woff2');
+  src: url('plex-serif-400-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+2116;
 }
 @font-face {
-  font-family: 'Spectral';
+  font-family: 'IBM Plex Serif';
+  font-style: italic;
+  font-weight: 400;
+  font-display: block;
+  src: url('plex-serif-400-it-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+2000-206F, U+20AC, U+2191, U+2193, U+2212;
+}
+@font-face {
+  font-family: 'IBM Plex Serif';
+  font-style: italic;
+  font-weight: 400;
+  font-display: block;
+  src: url('plex-serif-400-it-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+2116;
+}
+@font-face {
+  font-family: 'IBM Plex Serif';
   font-style: normal;
   font-weight: 600;
   font-display: block;
-  src: url('spectral-5.woff2') format('woff2');
+  src: url('plex-serif-600-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+2000-206F, U+20AC, U+2191, U+2193, U+2212;
 }
 @font-face {
-  font-family: 'Spectral';
+  font-family: 'IBM Plex Serif';
+  font-style: normal;
+  font-weight: 600;
+  font-display: block;
+  src: url('plex-serif-600-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+2116;
+}
+@font-face {
+  font-family: 'IBM Plex Serif';
   font-style: normal;
   font-weight: 700;
   font-display: block;
-  src: url('spectral-1.woff2') format('woff2');
+  src: url('plex-serif-700-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+2000-206F, U+20AC, U+2191, U+2193, U+2212;
 }
 @font-face {
-  font-family: 'Spectral';
+  font-family: 'IBM Plex Serif';
   font-style: normal;
-  font-weight: 800;
+  font-weight: 700;
   font-display: block;
-  src: url('spectral-3.woff2') format('woff2');
+  src: url('plex-serif-700-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+2116;
 }
-
 @font-face {
   font-family: 'Golos Text';
   font-style: normal;

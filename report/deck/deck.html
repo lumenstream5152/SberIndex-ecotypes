@@ -31,11 +31,12 @@
 
 <!-- ============ ЛИСТ 2 · ТИПЫ ============ -->
 <section class="slide">
-  <div class="kicker"><span>Типология · Интерпретация</span><span class="folio">ЛИСТ 2 / 12</span></div>
+  <div class="colophon"><span class="work">Типы безналичной России · СберИндекс 2026</span><span class="sec">Типология · Интерпретация</span><span class="folio">ЛИСТ 2 / 12</span></div>
   <div class="headline">Три типа безналичной России: периферия, сервисные ядра, Северо-Запад</div>
-  <div class="standfirst">Каждый тип — понятие с описанием: объекты × отличающие признаки (Миркин + дерево + SHAP, согласие трёх описателей публикуется). Имена — по формальному протоколу (prevalence ≥ 0,6, lift ≥ 2). Таксономия: 3 макро + 6 живых подтипов реестра (карта слоёв — type_id_map.parquet), подтипы — с пометкой пониженной стабильности.</div>
+  <div class="standfirst">Каждый тип — понятие с описанием: объекты × отличающие признаки (Миркин + дерево + SHAP, согласие трёх описателей публикуется). Имена — по формальному протоколу (prevalence ≥ 0,6, lift ≥ 2); подтипы — с пометкой пониженной стабильности.</div>
+  <div class="stamp">СВЕРЕНО · ПРОТОКОЛ ИМЕНОВАНИЯ</div>
   <div class="body">
-    <div class="hero panel">
+    <div class="plate panel">
       <div class="ptitle">Карта типов · 2 016 МО · размер ∝ населению</div>
       <img src="assets/fig/F0_map.png" alt="Карта типов">
     </div>
@@ -55,7 +56,7 @@
         <div class="phead"><span class="swatch" style="background:#8E3B4B"></span><span class="pname">Северо-Запад</span><span class="pscale">166 МО · 11,9 млн жит.</span></div>
         <div class="prow">СПб+Ленобласть, Карелия, Калининград, Мурманск. Зарплата ≈ 86 тыс. ₽ при тратах ниже ядер.</div>
         <div class="prow"><b>Кому и что:</b> региону — отдельный эталон Севера, не сравнение с Москвой.</div>
-        <div class="caveat">Согласие описателей 0,23 — портрет спорный, помечен в паспорте.</div>
+        <div class="caveat">Согласие описателей 0,23 — портрет спорный.</div>
       </div>
     </div>
   </div>
@@ -64,7 +65,7 @@
 
 <!-- ============ ЛИСТ 3 · ВАЛИДАЦИЯ ============ -->
 <section class="slide">
-  <div class="kicker"><span>Внешняя валидация · Интерпретация</span><span class="folio">ЛИСТ 3 / 12</span></div>
+  <div class="colophon"><span class="work">Типы безналичной России · СберИндекс 2026</span><span class="sec">Внешняя валидация · Интерпретация</span><span class="folio">ЛИСТ 3 / 12</span></div>
   <div class="headline">«Россия-1» Зубаревич раскалывается на два типа — моногорода не выделяются вовсе</div>
   <div class="standfirst">Типология проверена независимыми списками. Главная новизна: агломерационная Россия не едина по безналичному профилю — 89% «России-1» делятся между ядрами и Северо-Западом (lift 5,5 / 4,4).</div>
   <div class="body">
@@ -89,7 +90,7 @@
 
 <!-- ============ ЛИСТ 4 · ДАННЫЕ ============ -->
 <section class="slide">
-  <div class="kicker"><span>Данные · Простота методологии</span><span class="folio">ЛИСТ 4 / 12</span></div>
+  <div class="colophon"><span class="work">Типы безналичной России · СберИндекс 2026</span><span class="sec">Данные · Простота методологии</span><span class="folio">ЛИСТ 4 / 12</span></div>
   <div class="headline">Сырые корреляции рядов вырождены инфляцией (r = 0,91) — сходство считаем по остаткам</div>
   <div class="standfirst">Все ряды растут вместе с ценами: медианная корреляция сырых приростов 0,906 по 2 031 120 парам — сеть из них тривиальна. После кросс-секционного демеанинга по месяцу медиана −0,006.</div>
   <div class="body">
@@ -100,8 +101,8 @@
         <div class="bullet">2 190 рядов → <b>2 016 полных</b> (174 неполных исключены с публичным реестром: Бурятия только-2023, Дагестан/Чечня только-2024).</div>
         <div class="bullet">Преемники муниципальных реформ <b>не склеиваем</b> — ряд = формальная территория.</div>
         <div class="bullet warn">Дамп обрывается 2024-12: <b>2025-го на уровне МО не существует</b> — out-of-time нигде не обещаем.</div>
+        <div class="bullet"><b>Данные ограничивают выводы — и это написано раньше выводов</b> (предрегистрация, тег prereg-v1).</div>
       </div>
-      <div class="verdict-strip"><span class="lbl">Вывод</span>Данные ограничивают выводы — и это написано раньше выводов (предрегистрация, тег prereg-v1).</div>
     </div>
     <div class="col" style="flex:1">
       <div class="panel" style="flex:1;min-height:0"><div class="ptitle">Распределение попарных корреляций приростов (выборка 40 тыс. пар)</div><img src="assets/fig/F11_demean.png" alt=""></div>
@@ -117,7 +118,7 @@
 
 <!-- ============ ЛИСТ 5 · СЕТЬ ============ -->
 <section class="slide roomy">
-  <div class="kicker"><span>Построение сети</span><span class="folio">ЛИСТ 5 / 12</span></div>
+  <div class="colophon"><span class="work">Типы безналичной России · СберИндекс 2026</span><span class="sec">Построение сети</span><span class="folio">ЛИСТ 5 / 12</span></div>
   <div class="headline">Правило рёбер — формальное и проверяемое: 12 900 рёбер, ноль изолятов, одна компонента</div>
   <div class="standfirst">W = корреляции демеаненных остатков; каркас E* = kNN(10, union) ∩ BH-FDR(q=0,05) ∪ топ-3 safety net; гео-слой w = exp(−d/150 км) по автодорогам. Месячная перестройка топологии — шум (Jaccard половин 0,031) → один edge-set, 24 вектора весов.</div>
   <div class="body">
@@ -157,8 +158,8 @@
         <div class="bullet"><b>11 мер сходства + 3 анти-примера</b> прогнаны через предрегистрированный гейт (стабильность к пертурбациям рёбер).</div>
         <div class="bullet"><b>Learned-граф (обучаемый, M11) провалил гейт</b>: bootstrap-Jaccard 0,235, хаб-коллапс (max степень 2015 из 2016). Сложность не купила топологию.</div>
         <div class="bullet">Лаговые корреляции и DTW в бенчмарке (M4/M6/M7) — полная ширина критерия, не одно правило.</div>
+        <div class="bullet"><b>Сеть проста по правилу и строга по фильтру</b> — каждое ребро объяснимо и перепроверяемо.</div>
       </div>
-      <div class="verdict-strip"><span class="lbl">Вывод</span>Сеть проста по правилу и строга по фильтру — каждое ребро объяснимо и перепроверяемо.</div>
     </div>
     <div class="side col">
       <div class="bignums">
@@ -172,8 +173,8 @@
 </section>
 
 <!-- ============ ЛИСТ 6 · МЕРЫ ============ -->
-<section class="slide">
-  <div class="kicker"><span>Сравнение мер сходства</span><span class="folio">ЛИСТ 6 / 12</span></div>
+<section class="slide flip">
+  <div class="colophon"><span class="work">Типы безналичной России · СберИндекс 2026</span><span class="sec">Сравнение мер сходства</span><span class="folio">ЛИСТ 6 / 12</span></div>
   <div class="headline">M3 выиграл бенчмарк мер (0,398 против 0,280) — и схлопнул типологию в один кластер</div>
   <div class="standfirst">Предрегистрированный композит (Q/S/T/R/H), 13 ячеек синтетики × 15 реплик, margin ≥ 1 SE по парному бутстрэпу. Но плато-правило на M3 не находит стабильного разбиения вообще. Прод-типология — на сильнейшей мере, прошедшей плато-гейт (M2).</div>
   <div class="body">
@@ -192,9 +193,10 @@
 
 <!-- ============ ЛИСТ 7 · МЕТОДЫ × ICVI ============ -->
 <section class="slide">
-  <div class="kicker"><span>Сравнение методов · ICVI</span><span class="folio">ЛИСТ 7 / 12</span></div>
+  <div class="colophon"><span class="work">Типы безналичной России · СберИндекс 2026</span><span class="sec">Сравнение методов · ICVI</span><span class="folio">ЛИСТ 7 / 12</span></div>
   <div class="headline">Плато-правило вместо «локтя»: стабилен только макро-уровень k = 3 — при γ из предрегистрации</div>
   <div class="standfirst">9 методов 4 парадигм × полная панель ICVI (SW, CH/N, S_Dbw, AVI, AVU, MQ-Mancoridis; сверены с Pattern до 1e-16). Победитель композита — spectral_knn; прод — Leiden-консенсус (единственный с авто-k и плато-стабильностью). Обе версии композита публикуются.</div>
+  <div class="stamp">СВЕРЕНО · PATTERN ДО 1e−16</div>
   <div class="body">
     <div class="hero col">
       <div class="panel" style="flex:1.6"><div class="ptitle">Плато-гейт: seed-ARI по γ (25 seeds)</div><img src="assets/fig/F1_plateau.png" alt=""></div>
@@ -222,9 +224,10 @@
 
 <!-- ============ ЛИСТ 8 · ДИНАМИКА ============ -->
 <section class="slide">
-  <div class="kicker"><span>Динамика типологии</span><span class="folio">ЛИСТ 8 / 12</span></div>
+  <div class="colophon"><span class="work">Типы безналичной России · СберИндекс 2026</span><span class="sec">Динамика типологии</span><span class="folio">ЛИСТ 8 / 12</span></div>
   <div class="headline">Из 3 107 смен типа доказуемы 177 — инертность сильнее помесячного шума</div>
   <div class="standfirst">Гейт эволюции честный: ARI соседних месяцев 0,876 против нуля 5%-пертурбации 0,655 → 23/23 пары внутри шумового конверта. Это доказанная сверхинертность структуры, а не её отсутствие событий: переходы допускаются узловым скрином (нет мерцания + согласие seed-прогонов ≥ 0,8 + CLR-сдвиг ≥ q75 по всем узел-месяцам).</div>
+  <div class="stamp">177 ДОКАЗУЕМЫХ</div>
   <div class="body">
     <div class="hero panel"><div class="ptitle">Событийный слой: воронка допуска</div><img src="assets/fig/F9_events_funnel.png" alt=""></div>
     <div class="side col">
@@ -232,16 +235,16 @@
         <div class="bullet">Устойчивость типологии на горизонтах 1/3/6 мес — средний ARI 0,88/0,88/0,86 (медианы 0,90–0,92): «кто ты» меняется редко.</div>
         <div class="bullet"><b>177 = 173 события одного сезонного экскурса (тип 4) + 4 рождения типов</b> — не «177 историй», а одна волна + четыре дебюта, и это сильнее: структура динамики читается.</div>
         <div class="bullet">Порог не подогнан — сценарная иерархия: ядро <b>27</b> (q95, безусловные факты) / база <b>177</b> (q75) / либеральный <b>276</b> (q50); нарратив строим от ядра.</div>
+        <div class="bullet"><b>Инертность — свойство системы; редкость переходов (0,37% территория-месяцев) — свойство экономики.</b> Каждый допущенный переход верифицирован сдвигом профиля.</div>
       </div>
-      <div class="verdict-strip"><span class="lbl">Вывод</span>Инертность — свойство системы; редкость переходов (0,37% территория-месяцев) — свойство экономики. Каждый допущенный переход верифицирован сдвигом профиля.</div>
     </div>
   </div>
   <div class="srcnote"><span>outputs/main/stability.json · events_all/admitted.parquet · events_sensitivity.csv</span><span>публичная динамика — только smoothed-метки</span></div>
 </section>
 
 <!-- ============ ЛИСТ 9 · КЕЙСЫ ПЕРЕХОДОВ ============ -->
-<section class="slide">
-  <div class="kicker"><span>Переходы поимённо · Интерпретация</span><span class="folio">ЛИСТ 9 / 12</span></div>
+<section class="slide flip">
+  <div class="colophon"><span class="work">Типы безналичной России · СберИндекс 2026</span><span class="sec">Переходы поимённо · Интерпретация</span><span class="folio">ЛИСТ 9 / 12</span></div>
   <div class="headline">У каждого перехода — имя и сдвиг профиля; ассоциация, не пророчество</div>
   <div class="standfirst">177 карточек переходов с драйверами в сырых единицах (TreeSHAP) + event-study ±6 мес против matched-контроля: профиль переходчиков сближается с контролем за 2–3 месяца до события, после — разрыв не закрывается (n=177, различия внутри 95% CI — ассоциация, не причинность). Предсказуемость — отдельный вопрос, и ответ честный: лист 10.</div>
   <div class="body">
@@ -260,7 +263,7 @@
 
 <!-- ============ ЛИСТ 10 · ДРАЙВЕРЫ (ЧЕСТНЫЙ НЕГАТИВ) ============ -->
 <section class="slide">
-  <div class="kicker"><span>Драйверы переходов · Честный негатив</span><span class="folio">ЛИСТ 10 / 12</span></div>
+  <div class="colophon"><span class="work">Типы безналичной России · СберИндекс 2026</span><span class="sec">Драйверы переходов · Честный негатив</span><span class="folio">ЛИСТ 10 / 12</span></div>
   <div class="headline">Бустинг не обыграл простое правило — публикуем простое, а радар подписываем «непроверено»</div>
   <div class="standfirst">Rolling-origin с эмбарго, PR-AUC против prevalence рядом. h=1: logreg5 0,051 &gt; LGBM 0,029; pooled перевёрнут сдвигом prevalence между месяцами — публикуем оба числа и per-fold lift. Публике — margin-rank (§2.3 спеки: честность = баллы). Признак-утечка seed_agreement найден собственным канареечным тестом и удалён.</div>
   <div class="body">
@@ -270,8 +273,9 @@
         <div class="bullet">h=3: LGBM 0,062 против margin 0,044 и базы 0,031 — умеренно, честно, с обоими числами.</div>
         <div class="bullet">Радар смены типа на 2024-12: 202 МО в топ-дециле, <b>у всех unverified=true</b> — января 2025 в данных нет, верифицировать нечем.</div>
         <div class="bullet">Цена ошибки: пропуск перехода дороже ложной тревоги — порог радара есть функция потерь, не гиперпараметр.</div>
+        <div class="bullet"><b>Простая модель опубликована не как поражение ML, а как дисциплина отбора:</b> усложнение обязано покупаться числом.</div>
       </div>
-      <div class="verdict-strip"><span class="lbl">Вывод</span>Простая модель опубликована не как поражение ML, а как дисциплина отбора: усложнение обязано покупаться числом.</div>
+
     </div>
   </div>
   <div class="srcnote"><span>outputs/main/model_metrics.json (verdict, обе версии) · radar_watchlist.parquet</span><span>критерий: простота 15%</span></div>
@@ -279,7 +283,7 @@
 
 <!-- ============ ЛИСТ 11 · КЛУБЫ + ЛАГ-ЛИДЕРСТВО ============ -->
 <section class="slide roomy">
-  <div class="kicker"><span>Сходимость · Лаг-лидерство</span><span class="folio">ЛИСТ 11 / 12</span></div>
+  <div class="colophon"><span class="work">Типы безналичной России · СберИндекс 2026</span><span class="sec">Сходимость · Лаг-лидерство</span><span class="folio">ЛИСТ 11 / 12</span></div>
   <div class="headline">Вся Россия сходится в один клуб по маркетплейсам — и остаётся тремя типами</div>
   <div class="standfirst">Клубы сходимости Phillips–Sul (свой порт log-t, HAC): маркетплейсы+продовольствие — один глобальный клуб по всем 3 критериям (log-t t=+0,18 > −1,65; σ t=−12,5; β t=−43,2). Клубы ортогональны типам (ARI ≤ 0,06): сходимость идёт внутри типов, не стирая их.</div>
   <div class="body">
@@ -289,11 +293,11 @@
         <div class="bullet">Топ-«маяки» — периферия: средняя исходящая степень типа 0 = 2,52 против 0,31 у метрополисов.</div>
         <div class="bullet">Рёбра лидерства не локальнее случая (1,3% против 2,5% в пределах 150 км) — лидерство не про соседство.</div>
         <div class="bullet verdict">Глубже всех в поле — не «уникально»: у одного конкурента есть зачаточный lead-lag по типам; признаём это в отчёте.</div>
+        <div class="bullet"><b>Маркетплейс-волна — общероссийская сходимость; типология остаётся структурой различий, не уровней.</b></div>
       </div>
-      <div class="verdict-strip"><span class="lbl">Вывод</span>Маркетплейс-волна — общероссийская сходимость; типология остаётся структурой различий, не уровней.</div>
     </div>
     <div class="side col">
-      <div class="bignums">
+      <div class="bignums" style="flex-direction:column; gap:44px; justify-content:center; flex:1">
         <div class="bignum"><span class="v">1 клуб</span><span class="k">маркетплейсы+продовольствие, 3/3 критерия Phillips–Sul</span></div>
         <div class="bignum"><span class="v">4 437</span><span class="k">направленных рёбер лаг-лидерства (FDR 5%)</span></div>
         <div class="bignum"><span class="v">ARI ≤ 0,06</span><span class="k">клубы × типы — ортогональны</span></div>
@@ -305,9 +309,10 @@
 
 <!-- ============ ЛИСТ 12 · ОГРАНИЧЕНИЯ + ВОСПРОИЗВОДИМОСТЬ ============ -->
 <section class="slide roomy">
-  <div class="kicker"><span>Ограничения · Воспроизводимость</span><span class="folio">ЛИСТ 12 / 12</span></div>
+  <div class="colophon"><span class="work">Типы безналичной России · СберИндекс 2026</span><span class="sec">Ограничения · Воспроизводимость</span><span class="folio">ЛИСТ 12 / 12</span></div>
   <div class="headline">Семь ограничений названы до ваших вопросов — каждое число воспроизводимо одной командой</div>
   <div class="standfirst">Ограничения: окно 24 мес; нет 2025 на уровне МО; k=3 — потолок стабильности (подтипы с пометкой); гейт 23/23 — динамика только узловая; безналичное ≠ все расходы; драйверы умеренны; 174 МО исключены + 10 островов на fallback; гео-шкала λ=150 км не пертурбирована (записано в долг честно).</div>
+  <div class="stamp">MAKE REPRODUCE</div>
   <div class="body">
     <div class="col" style="flex:1.25">
       <div class="bullets">
@@ -315,8 +320,9 @@
         <div class="bullet"><b>make reproduce</b>: данные → панель → граф → кластеры → динамика → бенчмарк → интерпретация → отчёт; снапшот конфига и лог каждого прогона.</div>
         <div class="bullet"><b>158 тестов</b> зелёные; чистый клон поднимается; таблица «артефакт → команда → run» в outputs/main/README.md.</div>
         <div class="bullet">Числа отчёта генерируются кодом из артефактов (шаблон + numbers.json) — ручных литералов нет.</div>
+        <div class="bullet"><b>С 36 месяцами данных:</b> out-of-time на 2025-м, log-t с окном 24 вместо 16, мощнее событийный слой.</div>
       </div>
-      <div class="verdict-strip"><span class="lbl">С 36 месяцами данных</span>out-of-time на 2025-м, log-t с окном 24 вместо 16, мощнее событийный слой (больше admitted-переходов).</div>
+
     </div>
     <div class="side col">
       <div class="bignums">
