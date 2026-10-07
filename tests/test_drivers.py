@@ -39,6 +39,26 @@ def test_folds_embargo_and_counts():
         assert vals == sorted(vals) and len(set(vals)) == len(vals)
 
 
+# (а2) регрессия JR1/A12: mirror-рёбра несут чужой rank → слоты коллидировали,
+# узлы теряли ближайших соседей; knn_slots обязан дать k ближайших без потерь
+def test_knn_slots_no_rank_collision():
+    edges = pd.DataFrame([
+        # own-рёбра узла 1: ранги 1..3
+        (1, 2, 10.0, 1), (1, 3, 20.0, 2), (1, 4, 30.0, 3),
+        # mirror-рёбра с теми же rank, но бóльшими dist — коллизия слотов
+        (1, 5, 40.0, 1), (1, 6, 50.0, 2),
+        # own узла 3 + mirror от (1,3) с унаследованным rank=2
+        (3, 2, 5.0, 1), (3, 1, 20.0, 2),
+    ], columns=["tid_x", "tid_y", "dist_km", "rank"])
+    tids = np.array([1, 2, 3, 4, 5, 6])
+    nbr = drv.knn_slots(edges, tids, k=3)
+    # у узла 1 три ближайших: 2 (10 км), 3 (20 км), 4 (30 км) — не 5/6
+    assert set(nbr[0]) == {1, 2, 3}          # позиции tid 2,3,4
+    assert (nbr[0] >= 0).all()               # ни один слот не потерян
+    # у узла 3 два соседа: 2 (5 км) и 1 (20 км); третий слот = −1
+    assert set(nbr[2][nbr[2] >= 0]) == {0, 1}
+
+
 def _synthetic_xy(seed: int = 0, n: int = 4000):
     """Известный драйвер: logit(y) = 2.5·sig_driver + 0.3·noise_f1."""
     rng = np.random.default_rng(seed)

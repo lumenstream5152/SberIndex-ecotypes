@@ -192,9 +192,13 @@ def match_labels(z: np.ndarray, months: list[str] | None = None, *,
         # merge (§3): у persist-пары (a → b) второй родитель a' без своего
         # persist с J(a', b) ≥ τ_split растворяется в большем родителе.
         for cl, tid in list(persist.items()):
+            if reg[tid]["merged_into"] is not None:
+                continue  # уже растворён на этой итерации — не сливать дважды
             ci = int(np.searchsorted(cur, cl))
             second = [int(prev_ids[ri]) for ri in range(len(prev_ids))
-                      if int(prev_ids[ri]) not in claimed and J[ri, ci] >= tau_split]
+                      if int(prev_ids[ri]) not in claimed
+                      and reg[int(prev_ids[ri])]["merged_into"] is None
+                      and J[ri, ci] >= tau_split]
             if not second:
                 continue
             big = max([tid] + second, key=lambda p: (sizes[p], -p))
@@ -498,13 +502,18 @@ def goodman_order_test(z: np.ndarray) -> float | None:
 # ---------------------------------------------------------------- spatial Markov
 
 def spatial_markov(z: np.ndarray, knn: pd.DataFrame, nidx: pd.DataFrame, *,
-                   seed: int, B: int = BOOTSTRAP_B, frac: float = BOOTSTRAP_FRAC,
+                   seed: int, k: int = 10, B: int = BOOTSTRAP_B,
+                   frac: float = BOOTSTRAP_FRAC,
                    min_share: float = CONTEXT_MIN_SHARE) -> dict:
-    """Условные переходы по контексту соседей (§6.4): соседи = дорожный kNN из
-    edges_highway_knn.parquet (как есть, включая island-fallback); контекст
-    c(i,t) = доминирующий тип соседей в t при доле ≥ 0.5, иначе «mixed» —
-    исключается из сравнений. OR(i,j) = P(i→j | c=j) / P(i→j | c≠j),
+    """Условные переходы по контексту соседей (§6.4): соседи = k ближайших по
+    highway-дистанции из edges_highway_knn.parquet (симметризованный union
+    содержит больше k рёбер на узел — режем по dist_km, включая
+    island-fallback); контекст c(i,t) = доминирующий тип соседей в t при доле
+    ≥ 0.5, иначе «mixed» — исключается из сравнений.
+    OR(i,j) = P(i→j | c=j) / P(i→j | c≠j),
     CI — node bootstrap (B=50, сабсемпл 80% без возвращения)."""
+    knn = (knn.sort_values(["tid_x", "dist_km", "tid_y"])
+              .groupby("tid_x", as_index=False).head(k))
     nidx = nidx.sort_values("row_idx").reset_index(drop=True)
     tid2pos = {int(t): p for p, t in enumerate(nidx["territory_id"])}
     n, T = len(nidx), z.shape[0]

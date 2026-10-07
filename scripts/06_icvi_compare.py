@@ -351,7 +351,8 @@ def main() -> None:
             kk = len(np.unique(lab))
             panel = dict(SW=icvi.sw(X, lab), CH_over_N=icvi.ch_over_n(X, lab),
                          S_Dbw=icvi.sdbw(X, lab),
-                         MQ=icvi.mq(A04, lab, variant="mancoridis"))
+                         MQ=icvi.mq(A04, lab, variant="mancoridis"),
+                         AVI=icvi.avi(A04, lab), AVU=icvi.avu(A04, lab))
             icvi_report[mname] = {**panel, "AVI": icvi.avi(A04, lab),
                                   "AVU": icvi.avu(A04, lab)}
             stab = bm.method_stability(base_of[mname], A04, X, k_of[mname], cfg,
@@ -389,6 +390,18 @@ def main() -> None:
             rows[mname]["nmi_synth_cells"] = nmi_cells[mname]
 
         mdf = pd.DataFrame(rows).T
+        # циркулярные пары ICVI↔метод (prereg: помечать явно, не исключать):
+        # Q/MQ оптимизируются community-методами, SW/CH — k-means-подобными
+        circ = []
+        for mname in mdf.index:
+            b = base_of[mname]
+            flags = []
+            if b in ("leiden_consensus", "leiden", "louvain", "infomap", "kefrin"):
+                flags.append("MQ/Q оптимизируется методом (community)")
+            if b in ("kmeans", "gmm_full", "gmm_diag", "ward"):
+                flags.append("SW/CH близки к целевой функции метода (attribute)")
+            circ.append("; ".join(flags))
+        mdf["circular_note"] = circ
         # рубрика ключена базовыми именами методов (kmeans, не kmeans_k6)
         base_names = [base_of[m] for m in method_cols]
         interp, interp_status = bm.load_interpretability(

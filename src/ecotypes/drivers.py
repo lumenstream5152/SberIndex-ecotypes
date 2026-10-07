@@ -96,8 +96,9 @@ def load_inputs(root: str | Path) -> dict:
 
 
 def flagged_pair_months(stability: dict) -> set[str]:
-    """month_from пар, где ARI_cross ≤ ARI_perturb (эволюция неотличима от шума):
-    переходы t→t+1 по таким парам недоверенные (29 §5) — строки выбрасываем."""
+    """month_from пар, где ARI_cross ≥ медиана пертурб-нуля (отличия внутри
+    шумового конверта, dynamics.py:358): переходы t→t+1 по таким парам
+    недоверенные (29 §5) — строки выбрасываем (см. отклонение №12 в run_drivers)."""
     return {p["month_from"] for p in stability.get("pairs", []) if p["flagged"]}
 
 
@@ -139,6 +140,24 @@ def make_targets(labels: pd.DataFrame, registry: pd.DataFrame,
         bool(y == 1.0 and birth.get(tt) == months[midx[m] + 1])
         for y, tt, m in zip(df.y1, df.type_to, df.month_t)]
     return df, Z
+
+
+def knn_slots(edges: pd.DataFrame, tids: np.ndarray, k: int) -> np.ndarray:
+    """(n, k) слоты соседей: k ближайших по dist_km из симметризованного union
+    (own + mirror рёбра; rank коллидирует, поэтому НЕ используется как слот).
+    −1 = соседа нет. Детерминировано: сортировка (dist_km, tid_y)."""
+    n = len(tids)
+    nbr = -np.ones((n, k), dtype=int)
+    tid_row = {int(t): i for i, t in enumerate(tids)}
+    e = (edges.sort_values(["tid_x", "dist_km", "tid_y"])
+              .drop_duplicates(["tid_x", "tid_y"])
+              .groupby("tid_x", as_index=False).head(k).copy())
+    e["slot"] = e.groupby("tid_x").cumcount()
+    for tx, ty, s in zip(e.tid_x, e.tid_y, e["slot"]):
+        i, j = tid_row.get(int(tx)), tid_row.get(int(ty))
+        if i is not None and j is not None:
+            nbr[i, int(s)] = j
+    return nbr
 
 
 # ------------------------------------------------------------------ признаки
@@ -261,13 +280,7 @@ def build_feature_arrays(panel: pd.DataFrame, labels: pd.DataFrame,
         F[f"vol6_clr_{c[4:]}"] = full
 
     n_types = int(Z.max()) + 1
-    nbr = -np.ones((n, par.knn_k), dtype=int)
-    tid_row = {int(t): i for i, t in enumerate(tids)}
-    e = edges[edges["rank"] <= par.knn_k]
-    for tx, ty, r in zip(e.tid_x, e.tid_y, e["rank"]):
-        i, j = tid_row.get(int(tx)), tid_row.get(int(ty))
-        if i is not None and j is not None:
-            nbr[i, int(r) - 1] = j
+    nbr = knn_slots(edges, tids, par.knn_k)
     has_nbr = nbr >= 0
     F["nbr_covered"] = has_nbr.any(axis=1).astype(float)[:, None].repeat(T, 1)
 

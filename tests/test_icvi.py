@@ -192,7 +192,7 @@ def test_compute_all_defaults_and_cfg_override():
     full = icvi.compute_all(X, A, labels)
     assert set(full) == {"SW", "CH_over_N", "S_Dbw", "AVI", "AVU", "MQ"}
     assert all(np.isfinite(v) for v in full.values())
-    assert full["MQ"] == icvi.mq(A, labels, variant="turbomq")  # дефолт prereg.yaml
+    assert full["MQ"] == icvi.mq(A, labels, variant="mancoridis")  # дефолт prereg.yaml
 
     part = icvi.compute_all(
         None, A, labels, cfg_icvi={"panel": ["AVI", "MQ", "ANUI"], "mq_variant": "mancoridis"}

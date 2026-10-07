@@ -3,10 +3,12 @@ NOTICE
 Этот проект распространяется под лицензией MIT (см. LICENSE), за исключением
 указанного ниже.
 
-Зависимости под лицензией GPL-3.0 (используются как библиотеки, не входят
+Зависимости под GPL (используются как библиотеки, не входят
 в дистрибутив кода проекта):
-- leidenalg (https://github.com/vtraag/leidenalg)
-- infomap (https://github.com/mapequation/infomap)
+- leidenalg (https://github.com/vtraag/leidenalg) — GPL-3.0
+- infomap (https://github.com/mapequation/infomap) — GPL-3.0
+- igraph (https://github.com/igraph/python-igraph) — GPL-2.0-or-later
+  (транзитивная зависимость leidenalg)
 
 Данные и производные таблицы:
 - Потребительские безналичные расходы на уровне муниципальных образований,

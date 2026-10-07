@@ -718,8 +718,13 @@ def build_passports(X_std: np.ndarray, X_raw: np.ndarray,
                 f"{pop_total / 1e6:.1f} млн жителей "
                 f"({population['share']:.0%} выборки); ядро: {top3}.")
         if trend_up:
-            note += (f" Растущий сегмент профиля: {trend_up} — "
-                     "кандидат для продуктового трекинга.")
+            note += f" Растущий сегмент профиля: {trend_up}."
+        else:
+            note += " Устойчиво растущих сегментов в профиле нет."
+        agr_k = agr_score.get(int(k), np.nan)
+        if not np.isnan(agr_k) and agr_k < 0.5:
+            note += (f" Внимание: три описателя типа расходятся "
+                     f"(согласие {agr_k:.2f}) — портрет читать с осторожностью.")
         rows.append(dict(
             layer=layer, type_id=int(k),
             name_draft=names.get(int(k), f"тип K{int(k)}") if names
@@ -963,9 +968,13 @@ def validation_engel(labels: np.ndarray, mo_stats_df: pd.DataFrame) -> dict:
     rho = stats.spearmanr(g.wage_rub, g.share_prod).statistic \
         if len(g) > 2 else np.nan
     monotone = bool(g.share_prod.is_monotonic_decreasing)
+    n_types = len(g)
     return dict(table=g.reset_index()[["type", "wage_rub", "share_prod"]],
                 spearman_wage_food=float(rho), monotone_inverse=monotone,
-                note="ожидание: share_prod ↓ с ростом зарплаты (закон Энгеля)")
+                note=("ожидание: share_prod ↓ с ростом зарплаты (закон Энгеля). "
+                      f"Оговорка: типов всего {n_types} — Spearman на n={n_types} "
+                      "статистически тривиален (для n=3 точный p=1/3 даже при "
+                      "идеальном ρ); чек качественный, а не значимостный"))
 
 
 def validation_resorts(nodes: pd.DataFrame, resorts: pd.DataFrame) -> dict:

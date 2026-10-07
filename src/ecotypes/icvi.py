@@ -31,7 +31,7 @@ __all__ = [
 
 # Дефолты зеркалят configs/default.yaml (секция icvi) и fixed_decisions prereg.yaml.
 _DEFAULT_PANEL = ("SW", "CH_over_N", "S_Dbw", "AVI", "AVU", "MQ")
-_DEFAULT_MQ_VARIANT = "turbomq"
+_DEFAULT_MQ_VARIANT = "mancoridis"
 _DEFAULT_SDBW_ALG_NOISE = "bind"
 
 
@@ -148,18 +148,19 @@ def anui(A: np.ndarray | sparse.spmatrix, labels: np.ndarray) -> float:
 def mq(
     A: np.ndarray | sparse.spmatrix,
     labels: np.ndarray,
-    variant: str = "turbomq",
+    variant: str = "mancoridis",
 ) -> float:
     """Modularization Quality. В Pattern отсутствует — формулы из первоисточников.
 
-    variant='turbomq' (дефолт, prereg.yaml fixed_decisions.mq_variant):
-        TurboMQ (Bunch): MQ = Σᵢ CFQᵢ, CFQᵢ = 2μᵢ/(2μᵢ + εᵢ),
-        μᵢ = Sᵢᵢ/2 (внутренний вес), εᵢ = внешний вес кластера i.
-        ∈ [0, k], ↑; механически растёт с k — сравнивать только при фиксированном k.
-    variant='mancoridis' (Mancoridis et al., IWPC 1998, первоисточник понятия):
+    variant='mancoridis' (дефолт, prereg.yaml fixed_decisions.mq_variant;
+    Mancoridis et al., IWPC 1998, первоисточник понятия):
         MQ = (1/k)·Σᵢ μᵢ/Nᵢ² − (2/(k(k−1)))·Σᵢ<ⱼ εᵢⱼ/(2NᵢNⱼ),
         Nᵢ — число узлов кластера i, εᵢⱼ = Sᵢⱼ. ∈ [−1, 1], ↑; сопоставим между K.
         При k = 1: MQ = A₁ = μ₁/N₁².
+    variant='turbomq' (только абляция; в отчёт не идёт — механически растёт с k):
+        TurboMQ (Bunch): MQ = Σᵢ CFQᵢ, CFQᵢ = 2μᵢ/(2μᵢ + εᵢ),
+        μᵢ = Sᵢᵢ/2 (внутренний вес), εᵢ = внешний вес кластера i.
+        ∈ [0, k], ↑; сравнивать только при фиксированном k.
     """
     if variant not in ("turbomq", "mancoridis"):
         raise ValueError(f"mq variant должен быть 'turbomq'|'mancoridis', получено {variant!r}")
