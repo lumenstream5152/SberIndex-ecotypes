@@ -15,7 +15,8 @@
   конверта (ARI соседних месяцев 0.876 против нуля 0.655, гейт 23/23) —
   публикуется как доказанный факт устойчивости; переходы допускаются узловым
   отбором: 177 доказуемых событий из 3 107 сырых смен меток (1 363 после
-  сглаживания; q75-порог не подогнан).
+  сглаживания; q75-порог не подогнан) — из них 173 относятся к одному сезонному
+  экскурсу и 4 к рождениям типов.
 - **Бенчмарк мер**: победитель M3 (композит 0.398, отрыв ≥ 1 SE), но плато на
   M3 вырождается в k=1 → итоговая типология на M2: «лучшая мера ≠ лучшая опора
   типологии» (находка). ICVI все 6 штук, сверены с Pattern до 1e-16;
@@ -33,7 +34,7 @@
 Итоговые таблицы — `outputs/main/` (индекс «артефакт → команда → run» —
 в `outputs/main/README.md`, словарь колонок — `DATA_DICTIONARY.md`).
 Предрегистрация: [PREREG.md](PREREG.md) (тег `prereg-v1`), журнал отклонений —
-[PREREG_DEVIATIONS.md](PREREG_DEVIATIONS.md) (13 записей, включая реестр
+[PREREG_DEVIATIONS.md](PREREG_DEVIATIONS.md) (15 записей, включая реестр
 расхождений, найденных независимым аудитом). Методологический отчёт —
 [report/methodology.md](report/methodology.md) (генерируется `make report`).
 Презентация — [report/presentation.pdf](report/presentation.pdf).
@@ -42,7 +43,7 @@
 
 | Критерий (вес) | Где искать |
 |---|---|
-| Простота методологии (15%) | §3 отчёта (9 этапов), `make reproduce`, smoke за 5 минут |
+| Простота методологии (15%) | §3 отчёта (8 этапов), `make reproduce`, smoke за 5 минут |
 | Построение сети (15%) | §3.2 отчёта, `table_A_gate.parquet`, `table_topology.parquet` |
 | Сравнение методов (15%) | §4 отчёта, `table_methods.parquet`, `table_B_measures.parquet` |
 | ICVI — SW, CH, S_Dbw, AVI, AVU, MQ (15%) | §5 отчёта, `icvi_null.parquet`, сверка с Pattern до 1e-16 |
@@ -65,8 +66,8 @@ configs/    default.yaml (все гиперпараметры), smoke.yaml, prer
             interpretability_rubric.yaml, type_names_draft.yaml
 src/ecotypes/  пакет: panel, graphs, cluster, dynamics, measures, icvi,
             benchmark, synthetic, interpret, drivers, logt, laglead
-scripts/    01_download_data … 09_make_report — тонкие раннеры (12 штук,
-            все в make-шине; 08_build_site — лендинг, строится отдельно)
+scripts/    01_download_data … 10_figure_map — тонкие раннеры (17 штук,
+            все в make-шине)
 tests/      pytest: 158 тестов (контракты, инварианты, детерминизм, smoke)
 outputs/main/  итоговые таблицы (в git)
 report/     методологический отчёт + фигуры (генерируется make report)

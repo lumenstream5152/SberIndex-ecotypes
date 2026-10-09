@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import logging
 from pathlib import Path
 
@@ -87,6 +88,25 @@ def main() -> None:
     s = pd.DataFrame(rows)
     s.to_csv(ctx.dir / "events_sensitivity.csv", index=False)
     ctx.log(f"sensitivity: {dict(zip(s.q, s.n_admitted))}")
+
+    # (3) graph_summary.json — константы построения сети из метрик прогона 03
+    # (закрывает находку аудита: E*=12 900 иначе не восстанавливается из main)
+    run03 = find_run(Path("outputs"), "edges_star")
+    gm = json.loads((run03 / "metrics.json").read_text(encoding="utf-8"))
+    keys = ["n_nodes", "n_months", "pairs_total", "edges_e1_knn_union",
+            "edges_e2_fdr", "edges_e1_intersect_fdr", "edges_safety_added",
+            "edges_star", "edges_geo", "edges_total", "isolates",
+            "n_components", "deg_min", "deg_med", "deg_max", "mean_r_star",
+            "min_r_star", "med_r_raw_growth_antifact",
+            "med_r_demeanded_antifact", "weights_adj_corr_mean",
+            "eff_abs_r_threshold_bh", "share_pairs_bh_pass"]
+    gs = {k: gm[k] for k in keys if k in gm}
+    gs["source_run"] = run03.name
+    gs["note_jaccard_halves_0031"] = ("факт спеки: оконные корреляции не "
+                                      "публикуются; см. docstring graphs.py")
+    (ctx.dir / "graph_summary.json").write_text(
+        json.dumps(gs, ensure_ascii=False, indent=1), encoding="utf-8")
+    ctx.log(f"graph_summary: E*={gs.get('edges_star')} из {run03.name}")
 
     ctx.write_metrics({"type_id_map_pairs": int(len(m)),
                        "sensitivity": {str(r.q): int(r.n_admitted)
