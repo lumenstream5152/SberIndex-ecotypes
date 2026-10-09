@@ -1,4 +1,13 @@
-# sberindex-ecotypes
+# Типы безналичной России — СберИндекс 2026 · Кластеризация
+
+> ### 📄 Для жюри — вход сюда: [презентация, 13 листов (PDF)](report/presentation.pdf)
+> **Методологический отчёт:** [report/methodology.md](report/methodology.md) · **Чек-лист по критериям:** [CRITERIA.md](CRITERIA.md) · **Метки типов:** [outputs/main/labels.csv](outputs/main/labels.csv)
+
+«Средний по региону» почти ничего не говорит о конкретной территории. Здесь —
+типы локальных экономик России по потреблению СберИндекс 2023–24: динамическая
+атрибутированная сеть 2 016 муниципальных образований × 24 месяца, кластеры,
+их эволюция и интерпретация — как бенчмарк «свой к своим» для региона и банка.
+Полная воспроизводимость одной командой.
 
 ## За 60 секунд
 
@@ -65,6 +74,8 @@ make reproduce          # полный прогон (часы CPU)
 
 ## Структура
 
+Карта чтения для жюри: **1)** презентация → **2)** отчёт → **3)** [CRITERIA.md](CRITERIA.md) → **4)** [outputs/main/README.md](outputs/main/README.md) (каждый артефакт → команда → прогон).
+
 ```
 configs/    default.yaml (все гиперпараметры), smoke.yaml, prereg.yaml,
             interpretability_rubric.yaml, type_names_draft.yaml
@@ -73,8 +84,9 @@ src/ecotypes/  пакет: panel, graphs, cluster, dynamics, measures, icvi,
 scripts/    01_download_data … 10_figure_map — тонкие раннеры (17 штук,
             все в make-шине)
 tests/      pytest: 158 тестов (контракты, инварианты, детерминизм, smoke)
-outputs/main/  итоговые таблицы (в git)
-report/     методологический отчёт + фигуры (генерируется make report)
+outputs/main/  итоговые таблицы + labels.csv (в git)
+report/     методологический отчёт + презентация + фигуры (make report / make deck)
+PREREG.md   предрегистрация (тег prereg-v1) + PREREG_DEVIATIONS.md (15 записей)
 ```
 
 ## Результат → артефакт → команда
