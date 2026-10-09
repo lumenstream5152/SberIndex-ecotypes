@@ -1102,6 +1102,26 @@ def run_all(cfg, *, out_root: str | Path = "data/processed",
         naming = naming_protocol(labels, stats_df, layer=layer,
                                  external_lists=dict(monotown=mono,
                                                      resort=resorts))
+        # оверлей утверждения владельца: движок генерирует драфт, владелец
+        # утверждает в configs/type_names_draft.yaml; при approved=true
+        # proposed_name из конфига перекрывает сгенерированный — и сохраняется
+        # в последующих дампах, паспортах и metrics.json
+        names_cfg = Path("configs/type_names_draft.yaml")
+        if names_cfg.exists():
+            try:
+                prev = yaml.safe_load(names_cfg.read_text(encoding="utf-8")) or {}
+                lyr_prev = prev.get(layer) or {}
+                if lyr_prev.get("approved"):
+                    naming["approved"] = True
+                    for kk, vv in (lyr_prev.get("types") or {}).items():
+                        pn = (vv or {}).get("proposed_name")
+                        if not pn:
+                            continue
+                        for kk2, vv2 in naming["types"].items():
+                            if str(kk2) == str(kk):
+                                vv2["proposed_name"] = pn
+            except Exception:
+                log.warning("не смог прочитать утверждения имён", exc_info=True)
         names = {int(k): v["proposed_name"] or f"тип K{k}"
                  for k, v in naming["types"].items()}
         pp = build_passports(X, X_raw, feat, labels, nodes, layer=layer,

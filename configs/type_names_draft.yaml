@@ -1,12 +1,12 @@
 macro:
   layer: macro
-  approved: false
+  approved: true
   rule: 'prevalence ≥ 0.6 и lift ≥ 2; внешний факт: lift ≥ 2 и покрытие ≥ 30% списка
     (33 §6.4); утверждает владелец'
   types:
     '0':
       type_id: 0
-      proposed_name: null
+      proposed_name: Периферийная Россия
       candidates:
       - name: Продовольственная периферия
         prevalence: 0.245
@@ -115,7 +115,7 @@ macro:
       note: null
     '2':
       type_id: 2
-      proposed_name: null
+      proposed_name: Северо-Запад
       candidates:
       - name: Продовольственная периферия
         prevalence: 0.012
