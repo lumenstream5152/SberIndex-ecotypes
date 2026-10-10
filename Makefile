@@ -31,15 +31,12 @@ laglead:         ; uv run python scripts/07d_laglead.py $(ARGS) --out $(OUT)
 aux:             ; uv run python scripts/07e_publish_aux.py $(ARGS) --out $(OUT)
 map:             ; uv run python scripts/10_figure_map.py
 report:          ; uv run python scripts/09_make_report.py $(ARGS)
-# Презентация собирается из соседнего каталога deck/ (HTML → PDF, локальные
-# шрифты, chrome-headless-shell) и кладётся в report/presentation.pdf.
-deck:            ; cd ../deck && node build.mjs && cp presentation.pdf ../sberindex-ecotypes/report/presentation.pdf
+# Презентация зафиксирована в report/presentation.pdf
+deck:            ; @test -f report/presentation.pdf && echo "Каноничная презентация: report/presentation.pdf"
 # Витрина для GitHub Pages (site/)
-site: deck
-	mkdir -p site/assets
-	cp -r ../deck/assets/* site/assets/
-	cp ../deck/deck.html site/deck.html
-	cp report/presentation.pdf site/presentation.pdf
+site:
+	mkdir -p site/assets/fig
+	cp report/figures/F0_map.png site/assets/fig/F0_map.png 2>/dev/null || true
 # Воспроизведение полного численного конвейера
 reproduce: data panel graphs cluster dynamics measures icvi icvi-null synth interpret drivers convergence laglead aux report
 # smoke: полный пайплайн на подвыборке 200 МО, отдельный выходной каталог — полные артефакты не затираются

@@ -119,6 +119,27 @@ def test_git_anonymity_strict():
             f"Fatal: Identity leak '{term}' found in git commit log!"
         )
 
+    # 3. Tracked files path leak audit
+    ls_proc = subprocess.run(
+        ["git", "ls-files"],
+        cwd=REPO_ROOT,
+        capture_output=True,
+        text=True,
+        check=True,
+    )
+    tracked_files = [line.strip() for line in ls_proc.stdout.splitlines() if line.strip()]
+    for tf in tracked_files:
+        if tf == "tests/test_audit_invariants.py":
+            continue
+        p = REPO_ROOT / tf
+        if p.is_file() and p.suffix in [".md", ".py", ".yaml", ".json", ".html", ".csv", ".txt"]:
+            try:
+                content = p.read_text(encoding="utf-8")
+                assert ("file://" + "/Users/") not in content, f"Fatal: absolute path leak in {tf}"
+                assert ("github.com/" + "said") not in content, f"Fatal: personal github URL leak in {tf}"
+            except UnicodeDecodeError:
+                pass
+
 
 # -----------------------------------------------------------------------------
 # 3. Clean Git Tracking & .gitignore Hygiene
@@ -436,18 +457,20 @@ def test_plateau_table_k3_uniqueness_and_network_intra_share():
 
 
 def test_site_showcase_and_readme_presence():
-    """Verify site/index.html showcase exists, includes deck/presentation links, and README has 60-second section."""
+    """Verify site/index.html showcase exists, includes presentation links, and README has 60-second section."""
     site_html = (REPO_ROOT / "site" / "index.html").read_text(encoding="utf-8")
     assert "Типы локальных экономик безналичной России" in site_html
     assert "2 016 МО" in site_html or "2 016 муниципалитетов" in site_html
     assert "k = 3" in site_html
     assert "177 событий" in site_html
-    assert "deck.html" in site_html
     assert "presentation.pdf" in site_html
+    assert "said" not in site_html.lower()
 
     # Check standalone assets in site
-    assert (REPO_ROOT / "site" / "deck.html").exists()
-    assert (REPO_ROOT / "site" / "presentation.pdf").exists()
+    assert (REPO_ROOT / "site" / "index.html").exists()
+
+    # Check canonical presentation in report
+    assert (REPO_ROOT / "report" / "presentation.pdf").exists()
 
     # Check README.md
     readme_text = (REPO_ROOT / "README.md").read_text(encoding="utf-8")

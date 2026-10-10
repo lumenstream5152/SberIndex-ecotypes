@@ -15,7 +15,7 @@ from .config import Config
 
 class RunContext:
     def __init__(self, cfg: Config, config_name: str, stage: str, out_root: str | Path = "outputs"):
-        ts = datetime.now().strftime("%Y%m%d_%H%M%S")  # секунды: параллельные агенты не должны делить каталог
+        ts = datetime.now().strftime("%Y%m%d_%H%M%S")  # секунды: параллельные процессы не должны делить каталог
         try:
             git7 = subprocess.run(
                 ["git", "rev-parse", "--short", "HEAD"],

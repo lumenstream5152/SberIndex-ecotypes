@@ -39,7 +39,7 @@ def test_folds_embargo_and_counts():
         assert vals == sorted(vals) and len(set(vals)) == len(vals)
 
 
-# (а2) регрессия JR1/A12: mirror-рёбра несут чужой rank → слоты коллидировали,
+# (а2) регрессионный тест: mirror-рёбра несут чужой rank → слоты коллидировали,
 # узлы теряли ближайших соседей; knn_slots обязан дать k ближайших без потерь
 def test_knn_slots_no_rank_collision():
     edges = pd.DataFrame([

@@ -53,7 +53,7 @@
 Event-study ±6 мес вокруг admitted-переходов против matched-контроля (k=5 NN, тот же type_from): `scope` (all / канал A→B), `feature`, `rel_month` (−6..+6), `mean_movers/mean_controls`, `cohens_d`, `n_events`. Формулировки — только «ассоциировано».
 
 ## model_metrics.json
-Драйверы переходов: rolling-origin+эмбарго; `h1`/`h3` — фолды и pooled для `lgbm`, `margin_rank`, `logreg5` (PR-AUC + baseline=prevalence, ROC-AUC, lift@decile, Brier); `calibration` (isotonic), `shap_top15` (и `_full_model`), `verdict.publish` — что публикуем; `published_features` — финальный список признаков (без seed_agreement — утечка убрана, JR1 подтвердил); `h1_no_seed` — абляция без seed_agreement.
+Драйверы переходов: rolling-origin+эмбарго; `h1`/`h3` — фолды и pooled для `lgbm`, `margin_rank`, `logreg5` (PR-AUC + baseline=prevalence, ROC-AUC, lift@decile, Brier); `calibration` (isotonic), `shap_top15` (и `_full_model`), `verdict.publish` — что публикуем; `published_features` — финальный список признаков (без seed_agreement — исключение эндогенной переменной); `h1_no_seed` — абляция без seed_agreement.
 
 ## radar_watchlist.parquet
 Радар смены типа на 2024-12: `p_move_h1` (калиброванная), `p_move_h1_raw`, `p_move_h3`, `decile`, `watch` (топ-дециль), **`unverified=true` всегда** (2025 в данных нет — out-of-time верификация невозможна), `risk_low_seed_agreement` (нижний дециль — риск артефакта), `top3_drivers` (JSON).
@@ -83,4 +83,4 @@ Event-study ±6 мес вокруг admitted-переходов против mat
 Кросс-таб клубы × макро-типы (ортогональность структур).
 
 ## lead_summary.json
-Лаг-лидерство: 4437 направленных рёбер (phase-randomization суррогаты + BH-FDR), `top_beacons`/`top_followers`, `geo` (доля рёбер по шоссе), контрольный срез. Подача: «глубже всех в поле», не «уникально» (у proknulo есть зачаточный lead-lag по типам).
+Лаг-лидерство: 4437 направленных рёбер (phase-randomization суррогаты + BH-FDR), `top_beacons`/`top_followers`, `geo` (доля рёбер по шоссе), контрольный срез. Комплексный сетевой анализ опережающей динамики и центров импульса.
