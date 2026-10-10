@@ -316,3 +316,44 @@ def test_external_validation_kruskal_wallis_and_zubarevich():
     assert r4_rows["n"].sum() == 45
     assert r4_rows[r4_rows["type_id"] == 0]["n"].iloc[0] == 45
 
+
+# -----------------------------------------------------------------------------
+# 9. Workstream 3: Type Lifecycle Invariants
+# -----------------------------------------------------------------------------
+
+def test_type_lifecycle_registry_invariants():
+    """Verify that type_registry.parquet and type_id_map.parquet match reported lifecycle facts."""
+    import pandas as pd
+
+    reg = pd.read_parquet(REPO_ROOT / "outputs" / "main" / "type_registry.parquet")
+    assert len(reg) == 9, f"type_registry must contain exactly 9 types (0..8), found {len(reg)}"
+
+    # Type 4: Seasonal excursion
+    t4 = reg[reg["type_id"] == 4].iloc[0]
+    assert t4["birth_month"] == "2023-01"
+    assert t4["death_month"] == "2023-12"
+    assert t4["merged_into"] == 0
+    counts_t4 = json.loads(t4["n_nodes_by_month"])
+    assert counts_t4["2023-11"] == 537, f"Type 4 peak in Nov 2023 should be 537, got {counts_t4.get('2023-11')}"
+
+    # Type 7: Birth from Type 4
+    t7 = reg[reg["type_id"] == 7].iloc[0]
+    assert t7["birth_month"] == "2023-12"
+    assert t7["parent_id"] == 4
+    assert pd.isna(t7["death_month"])
+
+    # Type 8: 1-month artifact
+    t8 = reg[reg["type_id"] == 8].iloc[0]
+    assert t8["birth_month"] == "2024-10"
+    assert t8["death_month"] == "2024-10"
+    assert t8["lifetime"] == 1
+    counts_t8 = json.loads(t8["n_nodes_by_month"])
+    assert counts_t8["2024-10"] == 230
+
+    # Type mapping
+    tmap = pd.read_parquet(REPO_ROOT / "outputs" / "main" / "type_id_map.parquet")
+    # Subtype 3 overwhelmingly maps to Macro 2
+    sub3_to_macro2 = tmap[(tmap["registry_type"] == 3) & (tmap["macro_type"] == 2)]
+    assert float(sub3_to_macro2["share_within_macro_type"].iloc[0]) > 0.95
+
+
