@@ -260,3 +260,59 @@ def test_driver_model_metrics_truthfulness():
     assert "простое правило выигрывает у бустинга (0,051 против 0,029)" not in deck_text, (
         "Slide 2 must not conflate logreg5 (0.051) with simple rule margin_rank (0.026)"
     )
+
+
+# -----------------------------------------------------------------------------
+# 8. Workstream 2: External Validation (KW-Test & Zubarevich Reframing)
+# -----------------------------------------------------------------------------
+
+def test_external_validation_kruskal_wallis_and_zubarevich():
+    """Adversarially compute Kruskal-Wallis test on wages and verify Zubarevich four Russias stats."""
+    from scipy import stats
+    import pandas as pd
+
+    labels_df = pd.read_parquet(REPO_ROOT / "outputs" / "main" / "labels.parquet")
+    nodes_df = pd.read_parquet(REPO_ROOT / "data" / "processed" / "nodes_static.parquet")
+
+    # 1. Kruskal-Wallis on Rosstat wages
+    merged = pd.merge(labels_df[["territory_id", "leiden_consensus"]],
+                      nodes_df[["territory_id", "log_wage"]], on="territory_id").dropna()
+    assert len(merged) == 2016, "All 2016 territories must have valid wage entries"
+
+    merged["wage"] = np.exp(merged["log_wage"].values, dtype=np.float64)
+    groups = [g["wage"].values.astype(np.float64) for _, g in merged.groupby("leiden_consensus")]
+    assert len(groups) == 3, "Must have exactly 3 macro groups"
+
+    kw_res = stats.kruskal(*groups)
+    assert 588.0 < kw_res.statistic < 592.0, f"KW statistic {kw_res.statistic} out of expected 589.5 range"
+    assert float(kw_res.pvalue) < 1e-100, f"KW p-value {kw_res.pvalue} must be < 1e-100"
+
+    k = len(groups)
+    n = len(merged)
+    eta2_H = (kw_res.statistic - k + 1) / (n - k)
+    assert 0.285 < eta2_H < 0.295, f"Wage effect size eta2_H {eta2_H:.4f} not around 0.29"
+
+    # 2. Zubarevich 'Four Russias' exact numbers
+    fr_df = pd.read_parquet(REPO_ROOT / "outputs" / "main" / "validation_four_russias.parquet")
+
+    # Russia-1: Р1
+    r1_rows = fr_df[fr_df["russia"] == "Р1"]
+    total_r1 = r1_rows["n"].sum()
+    assert total_r1 == 273, f"Total Russia-1 MOs should be 273, got {total_r1}"
+
+    r1_urban = r1_rows[r1_rows["type_id"].isin([1, 2])]["n"].sum()
+    assert r1_urban == 244, f"Russia-1 in types 1+2 should be 244, got {r1_urban}"
+    share_r1_urban = r1_urban / total_r1
+    assert round(share_r1_urban, 3) == 0.894, f"Share should round to 0.894, got {share_r1_urban}"
+
+    # Lifts
+    lift_t1 = float(r1_rows[r1_rows["type_id"] == 1]["lift"].iloc[0])
+    lift_t2 = float(r1_rows[r1_rows["type_id"] == 2]["lift"].iloc[0])
+    assert 5.40 < lift_t1 < 5.50, f"Type 1 lift {lift_t1} out of range"
+    assert 4.35 < lift_t2 < 4.45, f"Type 2 lift {lift_t2} out of range"
+
+    # Russia-4: 100% in Type 0
+    r4_rows = fr_df[fr_df["russia"] == "Р4"]
+    assert r4_rows["n"].sum() == 45
+    assert r4_rows[r4_rows["type_id"] == 0]["n"].iloc[0] == 45
+
