@@ -402,3 +402,56 @@ def test_type_lifecycle_registry_invariants():
     assert float(sub3_to_macro2["share_within_macro_type"].iloc[0]) > 0.95
 
 
+# -----------------------------------------------------------------------------
+# 10. Workstream 4 & 5: Plateau k=3, Network Variance, and Showcase Site
+# -----------------------------------------------------------------------------
+
+def test_plateau_table_k3_uniqueness_and_network_intra_share():
+    """Verify that plateau_table.parquet proves k=3 is the unique stable plateau and network has high intra-share."""
+    import pandas as pd
+
+    pt = pd.read_parquet(REPO_ROOT / "outputs" / "main" / "plateau_table.parquet")
+    assert len(pt) == 13, f"Plateau grid must have exactly 13 gamma points, got {len(pt)}"
+
+    # gamma* = 0.293 is the unique plateau
+    gamma_star_row = pt[np.isclose(pt["gamma"], 0.293, atol=0.005)].iloc[0]
+    assert gamma_star_row["k_med"] == 3
+    assert gamma_star_row["ari_med"] > 0.93
+
+    # All k in [4, 10] fail plateau threshold (ari < 0.90)
+    sub_table = pt[(pt["k_med"] >= 4) & (pt["k_med"] <= 10)]
+    assert (sub_table["ari_med"] < 0.75).all(), "No k in [4, 10] should exceed ARI 0.75"
+
+    # Network topology: intra-cluster edges on production graph
+    es = pd.read_parquet(REPO_ROOT / "data" / "processed" / "graphs" / "edge_stats.parquet")
+    prod_edges = es[es["is_similarity"] == True]
+    assert len(prod_edges) == 12900, "Production similarity edges must be 12,900"
+
+    labels_df = pd.read_parquet(REPO_ROOT / "outputs" / "main" / "labels.parquet")
+    y = labels_df["leiden_consensus"].values
+    c_i = y[prod_edges["row_i"].values.astype(int)]
+    c_j = y[prod_edges["row_j"].values.astype(int)]
+    within_share = float((c_i == c_j).mean())
+    assert within_share > 0.92, f"Intra-cluster edge share {within_share} must exceed 92%"
+
+
+def test_site_showcase_and_readme_presence():
+    """Verify site/index.html showcase exists, includes deck/presentation links, and README has 60-second section."""
+    site_html = (REPO_ROOT / "site" / "index.html").read_text(encoding="utf-8")
+    assert "Типы локальных экономик безналичной России" in site_html
+    assert "2 016 МО" in site_html or "2 016 муниципалитетов" in site_html
+    assert "k = 3" in site_html
+    assert "177 событий" in site_html
+    assert "deck.html" in site_html
+    assert "presentation.pdf" in site_html
+
+    # Check standalone assets in site
+    assert (REPO_ROOT / "site" / "deck.html").exists()
+    assert (REPO_ROOT / "site" / "presentation.pdf").exists()
+
+    # Check README.md
+    readme_text = (REPO_ROOT / "README.md").read_text(encoding="utf-8")
+    assert "## ⏱️ За 60 секунд (без ML-жаргона)" in readme_text
+    assert "CRITERIA.md" in readme_text
+    assert "site/index.html" in readme_text
+

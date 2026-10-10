@@ -11,7 +11,7 @@ export OPENBLAS_NUM_THREADS=1
 export MKL_NUM_THREADS=1
 
 .PHONY: env data match-monotowns panel graphs cluster dynamics measures icvi icvi-null synth \
-        interpret drivers convergence laglead aux map report deck reproduce smoke test
+        interpret drivers convergence laglead aux map report deck site reproduce smoke test
 
 env:             ; uv sync --locked && uv run python -c "import ecotypes; print('env ok')"
 data:            ; uv run python scripts/01_download_data.py
@@ -34,8 +34,15 @@ report:          ; uv run python scripts/09_make_report.py $(ARGS)
 # Презентация собирается из соседнего каталога deck/ (HTML → PDF, локальные
 # шрифты, chrome-headless-shell) и кладётся в report/presentation.pdf.
 deck:            ; cd ../deck && node build.mjs && cp presentation.pdf ../sberindex-ecotypes/report/presentation.pdf
+# Витрина для GitHub Pages (site/)
+site: deck
+	mkdir -p site/assets
+	cp -r ../deck/assets/* site/assets/
+	cp ../deck/deck.html site/deck.html
+	cp report/presentation.pdf site/presentation.pdf
 # Воспроизведение полного численного конвейера
 reproduce: data panel graphs cluster dynamics measures icvi icvi-null synth interpret drivers convergence laglead aux report
 # smoke: полный пайплайн на подвыборке 200 МО, отдельный выходной каталог — полные артефакты не затираются
 smoke:         ; $(MAKE) reproduce OVERRIDES=configs/smoke.yaml OUT=data/processed_smoke
 test:          ; uv run pytest -q
+
