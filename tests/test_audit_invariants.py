@@ -263,6 +263,51 @@ def test_driver_model_metrics_truthfulness():
 
 
 # -----------------------------------------------------------------------------
+# 7. Workstream 1: CRITERIA.md Completeness & Artifact Integrity
+# -----------------------------------------------------------------------------
+
+def test_criteria_md_four_tables_and_artifacts():
+    """Verify CRITERIA.md contains all 4 comprehensive tables and all referenced artifacts exist."""
+    criteria_text = (REPO_ROOT / "CRITERIA.md").read_text(encoding="utf-8")
+
+    # 1. Check all 4 table headers exist
+    assert "## 1. Задачи номинации" in criteria_text
+    assert "## 2. Критерии оценивания" in criteria_text
+    assert "## 3. Требования Положения" in criteria_text
+    assert "## 4. Учтённые замечания жюри прошлого сезона" in criteria_text
+
+    # 2. Check all 6 criteria weights
+    for weight in ["15%", "30%", "10%"]:
+        assert weight in criteria_text
+
+    # 3. Check referenced outputs/main artifacts exist
+    main_dir = REPO_ROOT / "outputs" / "main"
+    key_artifacts = [
+        "graph_summary.json",
+        "table_topology.parquet",
+        "stability.json",
+        "type_registry.parquet",
+        "type_id_map.parquet",
+        "plateau_table.parquet",
+        "metrics_04_cluster.json",
+        "labels.parquet",
+        "labels.csv",
+        "icvi_null.parquet",
+        "table_methods.parquet",
+        "table_B_measures.parquet",
+        "events_admitted.parquet",
+        "passports_macro.parquet",
+        "transition_cards.parquet",
+        "model_metrics.json",
+        "radar_watchlist.parquet",
+        "convergence_summary.json",
+        "lead_summary.json",
+    ]
+    for artifact in key_artifacts:
+        assert (main_dir / artifact).exists(), f"Artifact referenced in CRITERIA.md missing: {artifact}"
+
+
+# -----------------------------------------------------------------------------
 # 8. Workstream 2: External Validation (KW-Test & Zubarevich Reframing)
 # -----------------------------------------------------------------------------
 

@@ -1,44 +1,61 @@
-# CRITERIA.md — чек-лист соответствия (СберИндекс 2026, «Кластеризация»)
+# CRITERIA.md — Карта соответствия требованиям и критериям жюри (СберИндекс 2026, «Кластеризация»)
 
-## 1. Задачи номинации (Положение, формулировка конкурса)
+> Документ прямого комплаенса для экспертной оценки: соответствие положению конкурса, критериям оценивания и устранение замечаний прошлого сезона. Все утверждения снабжены ссылками на разделы отчёта, презентации, код и численные артефакты в `outputs/main/`.
 
-| Задача | Где | Артефакт |
-|---|---|---|
-| Динамическая атрибутированная сеть МО | отчёт §3.2 | `outputs/main/graph_summary.json`, `table_topology.parquet` |
-| Помесячные снимки + сшивка типологий | отчёт §3 (этап 4) | `outputs/main/stability.json`, `type_registry.parquet` |
-| Кластеризация и выбор k | отчёт §4–5 | `outputs/main/table_methods.parquet`, `plateau_table.parquet` |
-| Полная панель ICVI (SW, CH, S_Dbw, AVI, AVU, MQ) | отчёт §5 | `outputs/main/icvi_null.parquet` (сверка с Pattern до 1e-16 — журнал №15) |
-| Сравнение методов | отчёт §4 | `outputs/main/table_methods.parquet` (9 базисных + консенсусный слой) |
-| Сравнение мер сходства сети | отчёт §4 | `outputs/main/table_B_measures.parquet`, `table_C_ranks.parquet` |
-| Эволюция типов | отчёт §5 | `outputs/main/events_all.parquet`, `events_admitted.parquet` |
-| Интерпретация типов | отчёт §6 | `outputs/main/passports_macro.parquet` |
-| Интерпретация переходов | отчёт §6 | `outputs/main/transition_cards.parquet` (177 поимённых) |
-| Практическая применимость | отчёт §6, презентация | `outputs/main/radar_watchlist.parquet` (unverified=true) |
+---
 
-## 2. Критерии оценки (веса)
+## 1. Задачи номинации (Положение конкурса)
 
-| Критерий (вес) | Где доказано | Главное число |
-|---|---|---|
-| Простота методологии (15%) | отчёт §3, `make reproduce` | smoke-прогон < 5 минут |
-| Построение сети (15%) | отчёт §3.2 | 12 900 рёбер = 12 759 (BH-FDR) + 141 safety, 0 изолятов |
-| Сравнение методов (15%) | отчёт §4 | spectral_knn 0,868 vs leiden_consensus 0,679 — обе версии композита |
-| ICVI (15%) | отчёт §5 | все 6 индексов против 200 перестановок, z до 263 |
-| Интерпретация (30%) | отчёт §6 | раскол «России-1» (lift 5,46/4,40), Энгель-градиент, паспорта типов |
-| Инновационная визуализация (10%) | `report/presentation.pdf` | карта типов (Альберс), воронка допуска, event-study |
+| № | Задача номинации | Где в отчёте / деке | Скрипт / Код | Артефакт в `outputs/main/` | Ключевое подтверждение / Число |
+|---|---|---|---|---|---|
+| 1 | **Построение динамической атрибутированной сети МО** | Отчёт §3.2, Дека л. 6 | `src/ecotypes/graphs.py`, `scripts/03_build_graphs.py` | `graph_summary.json`, `table_topology.parquet`, `edge_stats.parquet` | $E^* = 12\,900$ рёбер ($12\,759$ после BH-FDR $q=0.05$ + $141$ safety), 0 изолятов, 1 гигантская компонента; 24 среза весов. |
+| 2 | **Помесячные снимки и сшивка типологий** | Отчёт §3 (этап 4), §5, Дека л. 9 | `src/ecotypes/dynamics.py`, `scripts/05_dynamics.py` | `stability.json`, `type_registry.parquet`, `type_id_map.parquet` | Hungarian matching ($\tau=0.3$) + window-3 smoothing; 24 снимка CSPA-25; реестр 9 типов с датами рождения/смерти. |
+| 3 | **Кластеризация и выбор $k$** | Отчёт §4, §5, Дека л. 8 | `src/ecotypes/cluster.py`, `scripts/04_cluster.py` | `plateau_table.parquet`, `metrics_04_cluster.json`, `labels.parquet` | Плато-правило на сетке из 13 точек $\gamma$: единственный устойчивый пик при $\gamma^* = 0.293$ ($k=3$, seed-ARI $0.9315$). |
+| 4 | **Полная панель ICVI (SW, CH/n, S_Dbw, AVI, AVU, MQ)** | Отчёт §5, Дека л. 8 | `src/ecotypes/icvi.py`, `scripts/06_icvi_compare.py`, `scripts/06c_icvi_null.py` | `icvi_null.parquet`, `table_methods.parquet` | Все 6 индексов сверены с эталонной библиотекой Pattern жюри до $10^{-16}$; 200 перестановок: SW $z=5.4$, CH/n $z=453$, AVI $z=174$, MQ $z=263$. |
+| 5 | **Сравнение методов кластеризации** | Отчёт §4, Дека л. 8 | `src/ecotypes/cluster.py`, `scripts/06_icvi_compare.py` | `table_methods.parquet` | 9 базовых методов 4 семейств + Leiden-консенсус; композиты с ногой интерпретируемости ($0.679$) и без ($0.577$); циркулярность помечена. |
+| 6 | **Сравнение мер сходства сети** | Отчёт §4, Дека л. 7 | `src/ecotypes/measures.py`, `scripts/06a_measures.py` | `table_B_measures.parquet`, `table_C_ranks.parquet`, `table_A_gate.parquet` | 11 мер сходства + 3 антипримера; M3 выиграла композит ($0.398$ vs $0.280$ runner-up), но на графе дала $k=1$; прод на M2 ($0.137$). |
+| 7 | **Эволюция типов и шумовой гейт** | Отчёт §5, Дека л. 9 | `src/ecotypes/dynamics.py`, `scripts/05_dynamics.py` | `events_all.parquet`, `events_admitted.parquet`, `events_sensitivity.csv` | Шумовой гейт честно отметил 23/23 месяцев (сверхинертность); воронка допуска $3\,107 \to 1\,363 \to 1\,112 \to 532 \to 177$ доказанных событий. |
+| 8 | **Интерпретация типов** | Отчёт §6, Дека л. 3 | `src/ecotypes/interpret.py`, `scripts/07_interpret.py` | `passports_macro.parquet`, `agreement.parquet`, `shap_profiles.parquet` | 3 описателя (Миркин, дерево решений, SHAP); формальный протокол именования (prevalence $\ge 0.6$, lift $\ge 2.0$); закон Энгеля ($\rho = -1.00$). |
+| 9 | **Интерпретация переходов и драйверы** | Отчёт §6, Дека л. 10, 11 | `src/ecotypes/drivers.py`, `scripts/07b_drivers.py` | `transition_cards.parquet`, `model_metrics.json`, `event_study.parquet` | 177 поимённых карточек; rolling-origin с эмбарго; margin-rank ($0.0445$) и LGBM $h=3$ ($0.0617$); event-study против matched-контроля. |
+| 10 | **Практическая применимость и сценарный радар** | Отчёт §6, Дека л. 11, 12 | `src/ecotypes/drivers.py`, `scripts/07c_convergence.py`, `07d_laglead.py` | `radar_watchlist.parquet`, `convergence_summary.json`, `lead_summary.json` | Радар: 202 МО в зоне риска перехода (`unverified=true`); 1 глобальный клуб сходимости; граф лаг-лидерства $4\,437$ направленных связей. |
 
-## 3. Требования Положения (п.1.8)
+---
 
-| Требование | Файл |
-|---|---|
-| Чистый документированный код | `src/ecotypes/`, 158 тестов (`make test`) |
-| Конфигурационные файлы (YAML/JSON) | `configs/default.yaml`, `prereg.yaml`, `type_names_draft.yaml` |
-| Инструкция по запуску | README «Quickstart» и «За 60 секунд» |
-| Методологический отчёт на русском | `report/methodology.md` |
-| Презентация PDF | `report/presentation.pdf` (13 листов) |
+## 2. Критерии оценивания (веса согласно Положению, п.6.1)
+
+| Критерий (вес) | Где доказано в отчёте | Лист презентации | Каноничный артефакт | Главное подтверждение / Число |
+|---|---|---|---|---|
+| **Простота методологии (15%)** | Отчёт §3 (8 этапов конвейера), §8 | Лист 1, 13 | `Makefile`, `configs/default.yaml` | Прозрачный пайплайн: 1 команда запуска (`make reproduce`), чистый Python 3, `make smoke` выполняется за $< 3$ минут на 200 МО. |
+| **Построение сети (15%)** | Отчёт §3.2, §4 | Лист 2, 6, 7 | `outputs/main/graph_summary.json`, `table_B_measures.parquet` | $E^* = 12\,900$ рёбер, демеанирование сняло ложную корреляцию уровней ($r: 0.906 \to -0.006$), отбор связей по BH-FDR ($q=0.05$). |
+| **Сравнение методов (15%)** | Отчёт §4 | Лист 8 | `outputs/main/table_methods.parquet` | 9 базовых алгоритмов + Leiden-консенсус; честное сравнение: k-means быстрее в 110×, но Leiden выбран за сетевую чистоту и авто-$k$. |
+| **ICVI (15%)** | Отчёт §5 | Лист 8 | `outputs/main/icvi_null.parquet` | Все 6 обязательных индексов протестированы против 200 перестановок; $z$-оценки от $5.4$ до $453$; вырожденность AVU математически доказана. |
+| **Интерпретация (30%)** *(тай-брейк конкурса)* | Отчёт §6 | Лист 3, 4, 10, 11 | `outputs/main/passports_macro.parquet`, `validation_*.parquet` | 89.4%–100% макро-согласие с «Четырьмя Россиями» Зубаревич; раскол «России-1» на типы 1 и 2 (lift 5.46 / 4.40); KW-тест зарплат: $H=589.5, \eta^2_H=0.29$. |
+| **Инновационная визуализация (10%)** | `report/figures/`, `report/presentation.pdf` | Лист 3, 4, 9, 10 | `scripts/10_figure_map.py`, `site/index.html` | Проекция Альберса с GPKG-подложкой (F0), картографические паспорта типов, воронка фильтрации шума, event-study траектории. |
+
+---
+
+## 3. Требования Положения (п.1.8, п.9, п.10)
+
+| Пункт Положения | Требование регламента | Реализация в проекте | Путь в репозитории / Статус |
+|---|---|---|---|
+| **п. 1.8.1** | Исходный код на Python | Модульный чистый пакет `ecotypes`, стандарт PEP 8, типизация, uv | [`src/ecotypes/`](file:///Users/said/сбериндекс/кластеризация/sberindex-ecotypes/src/ecotypes/) |
+| **п. 1.8.2** | Конфигурационные файлы (YAML / JSON) | Полное разделение кода и настроек: параметры сети, пороги, сиды | [`configs/default.yaml`](file:///Users/said/сбериндекс/кластеризация/sberindex-ecotypes/configs/default.yaml), [`prereg.yaml`](file:///Users/said/сбериндекс/кластеризация/sberindex-ecotypes/configs/prereg.yaml) |
+| **п. 1.8.3** | Инструкция по запуску и воспроизведению | Пошаговое руководство, быстрый старт за 60 секунд, make-цели | [`README.md`](file:///Users/said/сбериндекс/кластеризация/sberindex-ecotypes/README.md), [`Makefile`](file:///Users/said/сбериндекс/кластеризация/sberindex-ecotypes/Makefile) |
+| **п. 1.8.4** | Методологический отчёт на русском языке | Полный отчёт с формулами, интерпретацией, ограничениями и ссылками | [`report/methodology.md`](file:///Users/said/сбериндекс/кластеризация/sberindex-ecotypes/report/methodology.md) (сборка `make report`) |
+| **п. 1.8.5** | Презентация / демонстрация результатов | 13-листовый полевой атлас высокого разрешения (PDF) + веб-витрина | [`report/presentation.pdf`](file:///Users/said/сбериндекс/кластеризация/sberindex-ecotypes/report/presentation.pdf), [`site/index.html`](file:///Users/said/сбериндекс/кластеризация/sberindex-ecotypes/site/index.html) |
+| **п. 9.1.2** | Создание работы в период проведения хакатона | История коммитов с 04.10.2026, предрегистрация до запуска расчётов | Git тег `prereg-v1`, [`PREREG.md`](file:///Users/said/сбериндекс/кластеризация/sberindex-ecotypes/PREREG.md) |
+| **п. 10.3** | Лицензионная чистота и открытость данных | Данные CC BY-SA 4.0; открытые зависимости (MIT / BSD / GPL-3 c NOTICE) | [`NOTICE`](file:///Users/said/сбериндекс/кластеризация/sberindex-ecotypes/NOTICE), [`pyproject.toml`](file:///Users/said/сбериндекс/кластеризация/sberindex-ecotypes/pyproject.toml) |
+
+---
 
 ## 4. Учтённые замечания жюри прошлого сезона
 
-- **Данные и метки опубликованы**: `outputs/main/labels.parquet` и `labels.csv` (2 016 МО × 9 базисных методов + консенсус).
-- **Каждое число воспроизводимо**: 36 ключевых чисел отчёта подставляются кодом из артефактов; константы сети — `graph_summary.json`; журнал отклонений — 15 записей.
-- **Smoke за 5 минут**: `make smoke` на подвыборке.
-- **Без запуска кода**: паспорта типов и 177 карточек переходов читаются как таблицы/CSV прямо в репозитории.
+| Проблема / Замечание прошлого конкурса | Риск для оценивания | Решение в данном проекте | Доказательство / Артефакт |
+|---|---|---|---|
+| **Метки и данные не опубликованы** | Жюри не может пощупать руками результаты кластеризации | Полная выгрузка меток всех 9 методов и консенсуса в CSV и Parquet с описанием колонок | [`outputs/main/labels.csv`](file:///Users/said/сбериндекс/кластеризация/sberindex-ecotypes/outputs/main/labels.csv), [`DATA_DICTIONARY.md`](file:///Users/said/сбериндекс/кластеризация/sberindex-ecotypes/outputs/main/DATA_DICTIONARY.md) |
+| **Числа в отчёте взяты с потолка / не бьются с кодом** | Недоверие к заявленным результатам и выводам | 36 ключевых чисел отчёта инжектируются скриптом напрямую из артефактов без ручных литералов | [`report/numbers.json`](file:///Users/said/сбериндекс/кластеризация/sberindex-ecotypes/report/numbers.json), [`scripts/09_make_report.py`](file:///Users/said/сбериндекс/кластеризация/sberindex-ecotypes/scripts/09_make_report.py) |
+| **Невозможно запустить: расчёт падает или идёт сутки** | Эксперт ставит штраф за невоспроизводимость | Инженерный `make smoke` на подвыборке 200 МО проходит весь пайплайн за $< 3$ минут | Таргет `make smoke`, 170 unit- и regression-тестов (158 базовых + 12 аудиторских инвариантов; `make test`) |
+| **Псевдо-динамика: шум выдаётся за «тренды»** | Отрицательная оценка сетевиков за дребезг топологии | Глобальный шумовой гейт динамики (23/23 месяцев); допуск событий по жёстким фильтрам | [`outputs/main/stability.json`](file:///Users/said/сбериндекс/кластеризация/sberindex-ecotypes/outputs/main/stability.json), воронка $3\,107 \to 177$ |
+| **Интерпретация оторвана от экономической реальности** | Нулевой балл по тай-брейку интерпретации | Внешняя валидация по Росстату (зарплаты KW $\eta^2_H=0.29$), Энгель-градиент, «Четыре России» | [`outputs/main/validation_*.parquet`](file:///Users/said/сбериндекс/кластеризация/sberindex-ecotypes/outputs/main/), Отчёт §6 |
+| **Связи отобраны без поправки на множественность** | Ложные корреляции среди 2 млн пар | Контроль ложных открытий BH-FDR ($q=0.05$) для связей сети и суррогатные тесты для лагов | [`outputs/main/graph_summary.json`](file:///Users/said/сбериндекс/кластеризация/sberindex-ecotypes/outputs/main/graph_summary.json), [`lead_summary.json`](file:///Users/said/сбериндекс/кластеризация/sberindex-ecotypes/outputs/main/lead_summary.json) |
+| **Необходимость разворачивать среду для чтения деталей** | Жюри тратит лишнее время при первичном аудите | Все паспорта типов и 177 карточек переходов подготовлены для табличного чтения на GitHub | [`outputs/main/passports_macro.parquet`](file:///Users/said/сбериндекс/кластеризация/sberindex-ecotypes/outputs/main/passports_macro.parquet), [`transition_cards.parquet`](file:///Users/said/сбериндекс/кластеризация/sberindex-ecotypes/outputs/main/transition_cards.parquet) |
