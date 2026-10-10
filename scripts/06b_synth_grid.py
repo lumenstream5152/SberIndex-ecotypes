@@ -87,7 +87,7 @@ def main() -> None:
     cfg = load_config(args.config, overrides=args.overrides)
     set_all_seeds(cfg.seed)
     psyn = load_prereg()["method"]["synthetic"]
-    replicas = args.replicas or int(psyn["replicas"])
+    replicas = args.replicas or int(getattr(getattr(cfg, "synthetic", None), "replicas", None) or psyn["replicas"])
     mode = {"центральная": "central", "все": "all"}.get(args.cells, args.cells)
 
     cells = [c for g in args.grids for c in _cells(g, psyn, mode)]

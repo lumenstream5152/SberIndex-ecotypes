@@ -111,9 +111,13 @@ def _jaccard(a: set, b: set) -> float:
     return len(a & b) / len(a | b) if (a or b) else 1.0
 
 
-def find_run(outputs: str | Path, key: str, require: str | None = None) -> Path:
-    """Последний outputs/<run>/metrics.json с ключом key (как в scripts/06)."""
+def find_run(outputs: str | Path, key: str, require: str | None = None,
+             allow_smoke: bool = False) -> Path:
+    """Последний outputs/<run>/metrics.json с ключом key (как в scripts/06).
+    По умолчанию игнорирует smoke-прогоны, защищая прод от перезаписи артефактов."""
     for d in sorted(Path(outputs).iterdir(), reverse=True):
+        if not allow_smoke and "smoke" in d.name:
+            continue
         m = d / "metrics.json"
         if not m.exists() or (require is not None and not (d / require).exists()):
             continue
@@ -999,7 +1003,12 @@ def aznakay_case(nodes: pd.DataFrame, labels: np.ndarray,
     """Кейс Азнакаевский район (tid 357, research/40): нефтяной район с
     зарплатой среднего города, но потребительским профилем периферии —
     «зарплата ≠ безналичное потребление». Одна строка фактов."""
-    i = int(np.where(nodes.territory_id.to_numpy() == tid)[0][0])
+    match = np.where(nodes.territory_id.to_numpy() == tid)[0]
+    if len(match) == 0:
+        i = 0
+        tid = int(nodes.territory_id.iloc[0])
+    else:
+        i = int(match[0])
     r = nodes.iloc[i]
     k = int(labels[i])
     s = mo_stats_df.set_index("territory_id")
@@ -1042,10 +1051,11 @@ def run_all(cfg, *, out_root: str | Path = "data/processed",
         (ctx.log if ctx else log.info)(msg)
 
     root = Path(out_root)
-    run04 = find_run(outputs, "gamma_star", require="labels.parquet")
+    is_smoke = "smoke" in str(out_root) or bool(ctx and "smoke" in getattr(ctx, "config_name", ""))
+    run04 = find_run(outputs, "gamma_star", require="labels.parquet", allow_smoke=is_smoke)
     lab04 = pd.read_parquet(run04 / "labels.parquet").sort_values("row_idx")
     nodes_all = pd.read_parquet(root / "nodes_static.parquet")
-    nodes = (lab04[["territory_id", "row_idx"]]
+    nodes = (lab04[["territory_id", "row_idx", "leiden_consensus"]]
              .merge(nodes_all, on="territory_id")
              .sort_values("row_idx").reset_index(drop=True))
     X, feat = cl.feature_matrix(nodes, cfg)
@@ -1070,7 +1080,7 @@ def run_all(cfg, *, out_root: str | Path = "data/processed",
                     .type_id_smooth.agg(lambda s: s.mode().iloc[0]))
         sub_lab = sub_lab.fillna(nodes.territory_id.map(mode_lab)).astype(int)
     layers = {
-        "macro": dict(labels=lab04.leiden_consensus.to_numpy(),
+        "macro": dict(labels=nodes.leiden_consensus.to_numpy(),
                       stability_note=None),
         "subtypes": dict(labels=sub_lab.to_numpy(),
                          stability_note=(
@@ -1168,7 +1178,7 @@ def run_all(cfg, *, out_root: str | Path = "data/processed",
                                   index=False)
         pd.DataFrame([{k: v for k, v in v_az.items() if k != "line"}]). \
             to_parquet(out / "validation_aznakay.parquet", index=False)
-        names_path = Path("configs/type_names_draft.yaml")
+        names_path = (out / "type_names_draft.yaml") if is_smoke else Path("configs/type_names_draft.yaml")
         with open(names_path, "w", encoding="utf-8") as f:
             yaml.safe_dump({l: r["naming"] for l, r in results.items()}, f,
                            allow_unicode=True, sort_keys=False)

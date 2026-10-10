@@ -47,8 +47,10 @@ def main() -> None:
     ctx = RunContext(cfg, config_name=name, stage="06c_icvi_null")
     t0 = time.time()
     root = Path(args.out)
+    is_smoke = bool(args.overrides and "smoke" in args.overrides)
 
-    run04 = find_run(Path("outputs"), "gamma_star", require="labels.parquet")
+    run04 = find_run(Path("outputs"), "gamma_star", require="labels.parquet",
+                     allow_smoke=is_smoke)
     lab04 = pd.read_parquet(run04 / "labels.parquet")
     lab04 = lab04.sort_values("row_idx").reset_index(drop=True)
     if "leiden_consensus" not in lab04.columns:

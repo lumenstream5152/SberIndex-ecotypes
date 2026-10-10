@@ -5,7 +5,7 @@ __pycache__/
 data/raw/
 # data/external/ — коммитим: малые валидационные файлы (моногорода, курорты, Росстат БД ПМО), ~27 МБ, нужны make interpret/panel на чистом клоне
 data/interim/
-data/processed/
+data/processed*/
 outputs/*
 !outputs/main/
 .DS_Store

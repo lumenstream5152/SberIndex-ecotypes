@@ -37,8 +37,9 @@ def main() -> None:
     seed = stage_seed(cfg.seed, "07d_laglead")
     labels = args.labels
     if labels is None:
-        labels = str(find_run("outputs", "gamma_star", require="labels.parquet")
-                     / "labels.parquet")
+        is_smoke = bool(args.overrides and "smoke" in args.overrides)
+        labels = str(find_run("outputs", "gamma_star", require="labels.parquet",
+                              allow_smoke=is_smoke) / "labels.parquet")
         ctx.log(f"labels ← {labels}")
     edges, summary = ll.run_laglead(args.out, labels_path=labels,
                                     seed=seed, log=ctx.log)

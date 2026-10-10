@@ -145,6 +145,7 @@ def main() -> None:
                    ms.sim_M9(d, lvl_idx=lvl_idx, grw_idx=grw_idx, alpha=alpha9)),
             "M10": (lambda d, lvl_idx=None, grw_idx=None:
                     ms.sim_M10(d, lvl_idx=lvl_idx, grw_idx=grw_idx, k=k)),
+            "M11": ms.sim_M11,
         }
 
         # K-means протокол на X_static — общий для всех мер (prereg §C)

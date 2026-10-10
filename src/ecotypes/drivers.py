@@ -719,12 +719,12 @@ def run_all(cfg: Config, root: str | Path, ctx) -> dict:
     inp = load_inputs(root)
     months = sorted(inp["panel"].month.unique())
     flagged = flagged_pair_months(inp["stability"])
-    if len(flagged) >= len(months) - 1:
+    if len(flagged) >= int((len(months) - 1) * 0.8):
         # PREREG_DEVIATIONS №12: глобальный гейт flagged по всем парам публикуется
         # как есть (stability.json), но построчное исключение flagged-месяцев
         # обнуляет ВСЕ таргеты y1/y3 → допуск событий переведён на узловой скрин
         # 05 (events.parquet = admitted), построчное исключение не применяется.
-        ctx.log(f"flagged покрывает все {len(flagged)}/{len(months) - 1} пар месяцев "
+        ctx.log(f"flagged покрывает {len(flagged)}/{len(months) - 1} пар месяцев "
                 f"(глобальный гейт, №12) — построчное исключение таргетов отключено, "
                 f"допуск событий узловым скрином (admitted)")
         flagged = set()

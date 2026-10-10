@@ -26,8 +26,10 @@ def main() -> None:
     df = pd.read_parquet("data/processed/panel_monthly.parquet")
     series = {"mpfood": df.share_market / df.share_prod, "food": df.share_prod, "proch": df.share_proch}
     # leiden_consensus из последнего подходящего run 04 (не статический путь)
+    is_smoke = bool(args.overrides and "smoke" in args.overrides)
     try:
-        lp = find_run("outputs", "gamma_star", require="labels.parquet") / "labels.parquet"
+        lp = find_run("outputs", "gamma_star", require="labels.parquet",
+                      allow_smoke=is_smoke) / "labels.parquet"
     except FileNotFoundError:
         lp = None
     types = pd.read_parquet(lp, columns=["territory_id", "leiden_consensus"]) if lp is not None else None
