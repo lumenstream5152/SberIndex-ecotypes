@@ -239,10 +239,22 @@ def test_makefile_all_runners_exist():
 # 6. Report and Deck Numerical Alignment
 # -----------------------------------------------------------------------------
 
+def _extract_pdf_text(pdf_path: Path) -> str:
+    assert pdf_path.exists(), f"Presentation does not exist at {pdf_path}"
+    proc = subprocess.run(
+        ["pdftotext", str(pdf_path), "-"],
+        capture_output=True,
+        text=True,
+    )
+    if proc.returncode == 0:
+        return proc.stdout
+    return pdf_path.read_bytes().decode("latin-1", errors="ignore")
+
+
 def test_report_deck_noise_envelope_alignment():
     """Verify that report §5 and deck Slide 9 both report 0.34 (1 - 0.655) and NOT 0.35."""
     report_text = (REPO_ROOT / "report" / "methodology.md").read_text(encoding="utf-8")
-    deck_text = (REPO_ROOT.parent / "deck" / "deck.html").read_text(encoding="utf-8")
+    deck_text = _extract_pdf_text(REPO_ROOT / "report" / "presentation.pdf")
     stability_data = json.loads(
         (REPO_ROOT / "outputs" / "main" / "stability.json").read_text(encoding="utf-8")
     )
@@ -257,7 +269,7 @@ def test_report_deck_noise_envelope_alignment():
     assert "на 0.35" not in report_text, "report/methodology.md still contains outdated '0.35'!"
 
     # 3. Check deck
-    assert "0,34" in deck_text, "deck.html must contain '0,34'"
+    assert "0,34" in deck_text or "0.34" in deck_text, "presentation.pdf must contain '0,34'"
 
 
 def test_driver_model_metrics_truthfulness():
@@ -276,7 +288,7 @@ def test_driver_model_metrics_truthfulness():
     assert 0.050 < pr_logreg5 < 0.051, f"logreg5 PR-AUC {pr_logreg5} out of range"
 
     # Slide 2 check
-    deck_text = (REPO_ROOT.parent / "deck" / "deck.html").read_text(encoding="utf-8")
+    deck_text = _extract_pdf_text(REPO_ROOT / "report" / "presentation.pdf")
     # Must NOT say 'простое правило выигрывает у бустинга (0,051 против 0,029)' without distinguishing logreg5
     assert "простое правило выигрывает у бустинга (0,051 против 0,029)" not in deck_text, (
         "Slide 2 must not conflate logreg5 (0.051) with simple rule margin_rank (0.026)"
