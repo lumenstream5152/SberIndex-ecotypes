@@ -1,0 +1,83 @@
+/* Локальные шрифты деки v2 «Полевой атлас»: IBM Plex Serif (дисплей,
+   НЕ Spectral — та в сканере AI-дефолтов) + Golos Text (тело) + PT Mono.
+   Plex Serif сабсеты лишены → ≤ ≥ ₽ — в заголовках эти символы не живут;
+   стек 'IBM Plex Serif','Golos Text' страхует на будущее. */
+@font-face {
+  font-family: 'IBM Plex Serif';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url('plex-serif-400-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+2000-206F, U+20AC, U+2191, U+2193, U+2212;
+}
+@font-face {
+  font-family: 'IBM Plex Serif';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url('plex-serif-400-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+2116;
+}
+@font-face {
+  font-family: 'IBM Plex Serif';
+  font-style: italic;
+  font-weight: 400;
+  font-display: block;
+  src: url('plex-serif-400-it-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+2000-206F, U+20AC, U+2191, U+2193, U+2212;
+}
+@font-face {
+  font-family: 'IBM Plex Serif';
+  font-style: italic;
+  font-weight: 400;
+  font-display: block;
+  src: url('plex-serif-400-it-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+2116;
+}
+@font-face {
+  font-family: 'IBM Plex Serif';
+  font-style: normal;
+  font-weight: 600;
+  font-display: block;
+  src: url('plex-serif-600-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+2000-206F, U+20AC, U+2191, U+2193, U+2212;
+}
+@font-face {
+  font-family: 'IBM Plex Serif';
+  font-style: normal;
+  font-weight: 600;
+  font-display: block;
+  src: url('plex-serif-600-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+2116;
+}
+@font-face {
+  font-family: 'IBM Plex Serif';
+  font-style: normal;
+  font-weight: 700;
+  font-display: block;
+  src: url('plex-serif-700-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+2000-206F, U+20AC, U+2191, U+2193, U+2212;
+}
+@font-face {
+  font-family: 'IBM Plex Serif';
+  font-style: normal;
+  font-weight: 700;
+  font-display: block;
+  src: url('plex-serif-700-cyrillic.woff2') format('woff2');
+  unicode-range: U+0301, U+0400-045F, U+2116;
+}
+@font-face {
+  font-family: 'Golos Text';
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: block;
+  src: url('golos-text-var.woff2') format('woff2');
+}
+
+@font-face {
+  font-family: 'PT Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: block;
+  src: url('pt-mono.woff2') format('woff2');
+}
